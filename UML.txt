@@ -1,0 +1,173 @@
+@startuml
+' -------------------- MODEL CLASSES --------------------
+
+abstract class User {
+  - nric: String
+  - password: String
+  - age: int
+  - maritalStatus: String
+  + login(): boolean
+  + changePassword(newPwd: String): void
+}
+
+class Applicant {
+  + viewOpenProjects(): List<Project>
+  + apply(project: Project): void
+  + viewApplicationStatus(): String
+  + requestWithdrawal(): void
+  + manageEnquiries(): void
+}
+
+class HDBOfficer {
+  + registerToProject(project: Project): void
+  + viewAssignedProjectDetails(): void
+  + updateFlatSelection(applicant: Applicant, flatType: String): void
+  + generateReceipt(applicant: Applicant): Receipt
+}
+
+class HDBManager {
+  + createProject(): void
+  + editProject(): void
+  + deleteProject(): void
+  + toggleVisibility(project: Project): void
+  + approveOfficerRegistration(officer: HDBOfficer): void
+  + approveApplication(app: Application): void
+  + approveWithdrawal(app: Application): void
+  + generateReport(filter: String): List<Applicant>
+}
+
+class Project {
+  - name: String
+  - neighborhood: String
+  - flatTypes: List<FlatType>
+  - openDate: Date
+  - closeDate: Date
+  - visibility: boolean
+  - maxOfficers: int
+  - assignedManager: HDBManager
+  + filter(criteria: String): List<Project>
+}
+
+class FlatType {
+  - type: String
+  - totalUnits: int
+  - remainingUnits: int
+}
+
+class Application {
+  - applicant: Applicant
+  - project: Project
+  - flatType: String
+  - status: String  ' Pending, Successful, Booked, etc.
+  + updateStatus(newStatus: String): void
+}
+
+class Enquiry {
+  - content: String
+  - createdBy: User
+  + reply(): void
+  + edit(): void
+  + delete(): void
+}
+
+' -------------------- INHERITANCE & ASSOCIATIONS --------------------
+
+User <|-- Applicant
+User <|-- HDBOfficer
+User <|-- HDBManager
+
+Applicant <|.. HDBOfficer : <<inherits>>
+Applicant "1" <-- "1" Application
+Project "1" <-- "1" Application
+Project "1" *-- "1..*" FlatType
+User "1" --> "0..*" Enquiry : creates
+
+@enduml
+
+
+@startuml
+package "Controller Layer" {
+
+    class AuthController {
+      + login(nric: String, password: String): User
+      + changePassword(user: User, newPwd: String): void
+    }
+
+    class ApplicationController {
+      + submitApplication(applicant: Applicant, project: Project, flatType: String): void
+      + viewApplicationStatus(applicant: Applicant): String
+      + withdrawApplication(applicant: Applicant): void
+    }
+
+    class ProjectController {
+      + filterProjects(criteria: String): List<Project>
+      + toggleVisibility(project: Project): void
+    }
+
+    class OfficerController {
+      + registerToProject(officer: HDBOfficer, project: Project): void
+      + bookFlat(applicant: Applicant, flatType: String): void
+      + updateFlatAvailability(project: Project, flatType: String): void
+      + generateReceipt(applicant: Applicant): Receipt
+    }
+
+    class ManagerController {
+      + createProject(...): Project
+      + editProject(project: Project): void
+      + deleteProject(project: Project): void
+      + approveOfficerRegistration(officer: HDBOfficer): void
+      + approveApplication(application: Application): void
+      + approveWithdrawal(application: Application): void
+      + generateReport(filter: String): List<Applicant>
+    }
+
+    class EnquiryController {
+      + submitEnquiry(user: User, content: String): void
+      + viewEnquiries(project: Project): List<Enquiry>
+      + replyToEnquiry(enquiry: Enquiry, reply: String): void
+    }
+}
+@enduml
+
+
+@startuml
+package "View Layer (CLI)" {
+
+    class AuthCLI {
+      + showLoginMenu(): void
+      + promptLogin(): void
+      + promptPasswordChange(): void
+    }
+
+    class ApplicantCLI {
+      + displayMainMenu(): void
+      + viewAvailableProjects(): void
+      + promptApplyProject(): void
+      + showApplicationStatus(): void
+      + promptWithdrawal(): void
+      + manageEnquiries(): void
+    }
+
+    class OfficerCLI {
+      + displayMainMenu(): void
+      + viewAssignedProject(): void
+      + registerToProject(): void
+      + handleBookings(): void
+      + generateReceipt(): void
+      + respondToEnquiries(): void
+    }
+
+    class ManagerCLI {
+      + displayMainMenu(): void
+      + createProject(): void
+      + editProject(): void
+      + deleteProject(): void
+      + toggleProjectVisibility(): void
+      + manageOfficerRegistrations(): void
+      + approveApplications(): void
+      + approveWithdrawals(): void
+      + generateReports(): void
+      + respondToEnquiries(): void
+    }
+}
+@enduml
