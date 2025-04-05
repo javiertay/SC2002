@@ -1,10 +1,13 @@
 package model;
 
+import java.time.LocalDate;
+
 public class Application {
     private Applicant applicant;
     private Project project;
     private String flatType; // "2-Room" or "3-Room"
     private Status status;
+    private LocalDate applicationDate;
 
     public enum Status {
         PENDING, SUCCESSFUL, UNSUCCESSFUL, BOOKED
@@ -14,7 +17,16 @@ public class Application {
         this.applicant = applicant;
         this.project = project;
         this.flatType = flatType;
-        this.status = Status.PENDING;
+        this.status = Status.PENDING; // Default to pending on submission
+        this.applicationDate = LocalDate.now(); // Default to current date
+    }
+
+    public LocalDate getApplicationDate() {
+        return applicationDate;
+    }
+
+    public void setApplicationDate(LocalDate applicationDate) {
+        this.applicationDate = applicationDate;
     }
 
     public Applicant getApplicant() {

@@ -9,6 +9,10 @@ public class EnquiryRegistry {
         enquiryList.add(e);
     }
 
+    public static List<Enquiry> getAllEnquiries() {
+        return new ArrayList<>(enquiryList);
+    }
+
     public static List<Enquiry> getEnquiriesByUser(String nric) {
         List<Enquiry> result = new ArrayList<>();
         for (Enquiry e : enquiryList) {

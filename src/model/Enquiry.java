@@ -8,6 +8,7 @@ public class Enquiry {
     private String senderNRIC;
     private String content;
     private String reply;
+    private String replyBy;
 
     public Enquiry(String senderNRIC, String projectName, String content) {
         this.enquiryId = nextId++;
@@ -15,10 +16,19 @@ public class Enquiry {
         this.projectName = projectName;
         this.content = content;
         this.reply = null; // no reply yet
+        this.replyBy = null; // no reply yet
     }
 
     public int getEnquiryId() {
         return enquiryId;
+    }
+
+    public void setEnquiryId(int id) {
+        this.enquiryId = id;
+    }
+    
+    public static void setNextId(int nextId) {
+        Enquiry.nextId = nextId;
     }
 
     public String getSenderNRIC() {
@@ -43,6 +53,14 @@ public class Enquiry {
 
     public String getReply() {
         return reply;
+    }
+
+    public String getReplyBy() {
+        return replyBy;
+    }
+
+    public void setReplyBy(String staffName) {
+        this.replyBy = staffName;
     }
 
     public void reply(String replyContent) {
