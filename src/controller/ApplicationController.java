@@ -1,19 +1,12 @@
 package controller;
 
 import model.*;
-import util.ExcelWriter;
-
-import java.util.HashMap;
 import java.util.Map;
 
 public class ApplicationController {
-
-    private final Map<String, Application> applicationStore = new HashMap<>();
-    // Key = applicant NRIC → Application
-
     // Submit application
     public boolean submitApplication(Applicant applicant, String projectName, String flatType) {
-        if (applicationStore.containsKey(applicant.getNric())) {
+        if (ApplicationRegistry.hasApplication(applicant.getNric())) {
             System.out.println("You already have an active application.");
             return false;
         }
@@ -51,11 +44,8 @@ public class ApplicationController {
         }
 
         // need to update this portion
-        flat.bookUnit(); // reduce numberof unit availble
-        ExcelWriter.writeNewApplication(applicant, project, flatType); // write to excel
-
         Application application = new Application(applicant, project, flatType);
-        applicationStore.put(applicant.getNric(), application);
+        ApplicationRegistry.addApplication(applicant.getNric(), application);
         applicant.setHasApplied(true);
 
         System.out.println("Application submitted successfully.");
@@ -64,7 +54,7 @@ public class ApplicationController {
 
     // View current application
     public void viewApplicationStatus(Applicant applicant) {
-        Application application = applicationStore.get(applicant.getNric());
+        Application application = ApplicationRegistry.getApplicationByNRIC(applicant.getNric());
         if (application == null) {
             System.out.println("ℹYou have not applied for any project.");
         } else {
@@ -74,7 +64,7 @@ public class ApplicationController {
 
     // Withdraw application
     public boolean withdrawApplication(Applicant applicant) {
-        Application application = applicationStore.remove(applicant.getNric());
+        Application application = ApplicationRegistry.removeApplication(applicant.getNric());
         if (application == null) {
             System.out.println("No application found to withdraw.");
             return false;
@@ -87,10 +77,10 @@ public class ApplicationController {
 
     // Utility: Get application for Officer to book flat
     public Application getApplicationByNRIC(String nric) {
-        return applicationStore.get(nric);
+        return ApplicationRegistry.getApplicationByNRIC(nric);
     }
 
     public Map<String, Application> getAllApplications() {
-        return applicationStore;
+        return ApplicationRegistry.getAllApplications();
     }
 }

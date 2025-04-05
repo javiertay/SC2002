@@ -1,7 +1,6 @@
 package controller;
 
 import model.*;
-import util.ExcelWriter;
 
 import java.util.*;
 
@@ -23,8 +22,6 @@ public class ManagerController {
         }
         ProjectRegistry.addProject(project);
         System.out.println("Project created successfully.");
-
-        ExcelWriter.writeNewProjectInfo(project);
     }
 
     public void viewAllProject() {
@@ -72,8 +69,6 @@ public class ManagerController {
         }
         ProjectRegistry.removeProject(projectName);
         System.out.println("Project deleted.");
-
-        ExcelWriter.deleteProjectFromExcel(projectName);
     }
  
     // Approve officer registration
