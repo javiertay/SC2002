@@ -9,7 +9,6 @@ import java.util.Scanner;
 
 public class MainApp {
     public static void main(String[] args) {
-        String regex_pattern = "^[sStT]\\d{7}[a-zA-Z]$";
         Scanner sc = new Scanner(System.in);
         
         // ===== Initialize Controllers =====
@@ -20,6 +19,8 @@ public class MainApp {
         ManagerController managerController = new ManagerController(officerController, applicationController);
         ApplicantController applicantController = new ApplicantController(applicationController);
         
+        LoginCLI loginCLI = new LoginCLI(authController, sc);
+
         // ===== Load Data =====
         ExcelReader.ExcelData data = ExcelReader.loadAllData("src/data/CombinedExcel.xlsx", authController);
         if (data == null) {
@@ -39,18 +40,8 @@ public class MainApp {
         // ===== Login Loop =====
         while (true) {
             System.out.println("\n=== Welcome to the BTO Management System ===");
-            System.out.print("Enter NRIC (or 'exit'): ");
-            String nric = sc.nextLine().trim();
-            if (nric.equalsIgnoreCase("exit")) break;
-            if (!nric.matches(regex_pattern)) {
-                System.out.println("Invalid NRIC format. Please try again.");
-                continue;
-            }
-            System.out.print("Enter Password: ");
-            String password = sc.nextLine();
-
-            User user = authController.login(nric, password);
-            if (user == null) continue;
+            User user = loginCLI.promptLogin();
+            if (user == null) break;
 
             // ===== Route to CLI Based on Role =====
             switch (user.getRole()) {

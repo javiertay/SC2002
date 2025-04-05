@@ -21,13 +21,7 @@ public class AuthController {
     public User login(String nric, String password) {
         User user = userStore.get(nric);
 
-        if (user == null) {
-            System.out.println("NRIC not found.");
-            return null;
-        }
-
         if (!user.getPassword().equals(password)) {
-            System.out.println("Incorrect password.");
             return null;
         }
 
