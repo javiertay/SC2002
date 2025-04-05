@@ -7,11 +7,9 @@ import model.*;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
 import java.util.Scanner;
 
 public class ManagerCLI {
-
     private final HDBManager manager;
     private final ManagerController managerController;
     private final AuthController authController;
@@ -41,7 +39,7 @@ public class ManagerCLI {
                 case 6 -> approveApplication();
                 case 7 -> approveWithdrawal();
                 case 8 -> generateReport();
-                case 9 -> viewAndReplyEnquiries();
+                case 9 -> manageEnquiries();
                 case 10 -> System.out.println("Logging out...");
                 default -> System.out.println("Invalid option.");
             }
@@ -169,26 +167,14 @@ public class ManagerCLI {
         managerController.approveWithdrawal(nric);
     }
 
+    private void manageEnquiries() {
+        EnquiryCLI enquiryCLI = new EnquiryCLI(manager, enquiryController);
+        enquiryCLI.start();
+    }
+
     private void generateReport() {
         System.out.print("Filter by Marital Status (Married/Single/All): ");
         String filter = scanner.nextLine();
         managerController.generateReport(filter);
-    }
-
-    private void viewAndReplyEnquiries() {
-        List<Enquiry> list = enquiryController.getProjectEnquiries(manager.getAssignedProject());
-        if (list.isEmpty()) {
-            System.out.println("No enquiries for this project.");
-            return;
-        }
-        list.forEach(System.out::println);
-
-        System.out.print("Reply to Enquiry ID (0 to skip): ");
-        int id = Integer.parseInt(scanner.nextLine());
-        if (id != 0) {
-            System.out.print("Reply message: ");
-            String reply = scanner.nextLine();
-            enquiryController.replyToEnquiry(id, reply);
-        }
     }
 }

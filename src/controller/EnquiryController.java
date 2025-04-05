@@ -1,19 +1,18 @@
 package controller;
 
-import model.Enquiry;
-import model.EnquiryRegistry;
+import model.*;
 
 import java.util.List;
 
 public class EnquiryController {
 
     public void submitEnquiry(String senderNRIC, String projectName, String content) {
-        Enquiry e = new Enquiry(senderNRIC, projectName, content);
-        EnquiryRegistry.addEnquiry(e);
-        System.out.println("✅ Enquiry submitted.");
+        Enquiry enquiry = new Enquiry(senderNRIC, projectName, content);
+        EnquiryRegistry.addEnquiry(enquiry);
+        System.out.println("Enquiry submitted.");
     }
 
-    public List<Enquiry> getUserEnquiries(String senderNRIC) {
+    public List<Enquiry> getEnquiriesByUser(String senderNRIC) {
         return EnquiryRegistry.getEnquiriesByUser(senderNRIC);
     }
 
@@ -21,13 +20,49 @@ public class EnquiryController {
         return EnquiryRegistry.deleteById(id, senderNRIC);
     }
 
-    public boolean replyToEnquiry(int enquiryId, String replyText) {
-        Enquiry e = EnquiryRegistry.getById(enquiryId);
-        if (e != null) {
-            e.reply(replyText);
-            return true;
+    public boolean replyToEnquiry(int enquiryId, String replyText, User user) {
+        Enquiry enquiry = EnquiryRegistry.getById(enquiryId);
+        if (enquiry == null) return false;
+
+        String projectName = enquiry.getProjectName();
+
+        if (user instanceof HDBOfficer officer) {
+            if (officer.getAssignedProject() == null || 
+                !officer.getAssignedProject().equals(projectName)) {
+                System.out.println("You can only reply to enquiries for your assigned project.");
+                return false;
+            }
         }
-        return false;
+
+        if (user instanceof HDBManager manager) {
+            if (manager.getAssignedProject() != null &&
+                !manager.getAssignedProject().equals(projectName)) {
+                System.out.println("You can only reply to enquiries for your assigned project.");
+                return false;
+            }
+        }
+
+        enquiry.reply(replyText);
+        enquiry.setReplyBy(user.getName());
+
+        return true;
+    }
+
+    public boolean updateEnquiry(int enquiryId, String newContent, String senderNRIC) {
+        Enquiry enquiry = EnquiryRegistry.getById(enquiryId);
+        if (enquiry == null || !enquiry.getSenderNRIC().equals(senderNRIC)) {
+            System.out.println("You can only edit your own enquiries.");
+            return false; // Not found or not the sender
+        }
+
+        if (enquiry.hasReply() && !enquiry.getReply().isEmpty()) {
+            System.out.println("Your enquiry has already been replied to. Please submit a new enquiry.");
+            return false;
+        }
+
+        enquiry.setContent(newContent);
+        System.out.println("Enquiry updated successfully.");
+        return true;
     }
 
     public List<Enquiry> getProjectEnquiries(String projectName) {

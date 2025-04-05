@@ -392,10 +392,12 @@ public class ExcelWriter {
     
             // Create header
             Row header = sheet.createRow(0);
-            header.createCell(0).setCellValue("Sender NRIC");
-            header.createCell(1).setCellValue("Project Name");
-            header.createCell(2).setCellValue("Content");
-            header.createCell(3).setCellValue("Reply");
+            header.createCell(0).setCellValue("Enquiry ID");
+            header.createCell(1).setCellValue("Sender NRIC");
+            header.createCell(2).setCellValue("Project Name");
+            header.createCell(3).setCellValue("Content");
+            header.createCell(4).setCellValue("Reply");
+            header.createCell(5).setCellValue("Replied By");
     
             int rowNum = 1;
     
@@ -406,6 +408,7 @@ public class ExcelWriter {
                 row.createCell(2).setCellValue(enquiry.getProjectName());
                 row.createCell(3).setCellValue(enquiry.getContent());
                 row.createCell(4).setCellValue(enquiry.getReply() != null ? enquiry.getReply() : "");
+                row.createCell(5).setCellValue(enquiry.getReplyBy() != null ? enquiry.getReplyBy() : "");
             }
     
             try (FileOutputStream fos = new FileOutputStream(filePath)) {

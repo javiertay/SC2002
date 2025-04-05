@@ -64,6 +64,11 @@ public class ExcelReader {
 
     // Load Applicants
     public static List<Applicant> loadApplicants(Sheet sheet) {
+        if (sheet == null) {
+            System.out.println("Sheet not found in Excel. Skipping.");
+            return Collections.emptyList();
+        }
+        
         List<Applicant> applicants = new ArrayList<>();
 
         for (Row row : sheet) {
@@ -83,6 +88,10 @@ public class ExcelReader {
 
     // Load HDB Officers
     public static List<HDBOfficer> loadOfficers(Sheet sheet) {
+        if (sheet == null) {
+            System.out.println("Sheet not found in Excel. Skipping.");
+            return Collections.emptyList();
+        }
         List<HDBOfficer> officers = new ArrayList<>();
 
         for (Row row : sheet) {
@@ -102,6 +111,11 @@ public class ExcelReader {
 
     // Load HDB Managers
     public static List<HDBManager> loadManagers(Sheet sheet) {
+        if (sheet == null) {
+            System.out.println("Sheet not found in Excel. Skipping.");
+            return Collections.emptyList();
+        }
+
         List<HDBManager> managers = new ArrayList<>();
 
         for (Row row : sheet) {
@@ -121,6 +135,11 @@ public class ExcelReader {
 
     // Load Projects
     public static List<Project> loadProjects(Sheet sheet) {
+        if (sheet == null) {
+            System.out.println("Sheet not found in Excel. Skipping.");
+            return Collections.emptyList();
+        }
+
         List<Project> projects = new ArrayList<>();
     
         for (Row row : sheet) {
@@ -148,7 +167,7 @@ public class ExcelReader {
             String officerNames = (row.getCell(12) != null) ? row.getCell(12).getStringCellValue().trim() : "";
             String[] officerName = officerNames.split(",");
 
-            String visibilityCell = (row.getCell(13) != null) ? row.getCell(13).getStringCellValue().trim() : "Visible";
+            String visibilityCell = (row.getCell(13) != null) ? row.getCell(13).getStringCellValue().trim() : "TRUE";
             boolean visibility = visibilityCell.equalsIgnoreCase("true");
             
             // Create and populate the project
@@ -170,6 +189,11 @@ public class ExcelReader {
 
     // load applications
     public static List<Application> loadApplications(Sheet sheet, AuthController authController) {
+        if (sheet == null) {
+            System.out.println("Sheet not found in Excel. Skipping.");
+            return Collections.emptyList();
+        }
+
         List<Application> applications = new ArrayList<>();
 
         for (Row row : sheet) {
@@ -207,6 +231,11 @@ public class ExcelReader {
     }
     
     public static List<Enquiry> loadEnquiries(Sheet sheet) {
+        if (sheet == null) {
+            System.out.println("Sheet not found in Excel. Skipping.");
+            return Collections.emptyList();
+        }
+
         List<Enquiry> enquiries = new ArrayList<>();
 
         for (Row row : sheet) {
@@ -217,12 +246,15 @@ public class ExcelReader {
             String projectName = row.getCell(2).getStringCellValue();
             String content = row.getCell(3).getStringCellValue();
             String reply = row.getCell(4) != null ? row.getCell(4).getStringCellValue() : null;
+            String staffName = row.getCell(5) != null ? row.getCell(5).getStringCellValue() : null;
 
             Enquiry enquiry = new Enquiry(senderNRIC, projectName, content);
             enquiry.setEnquiryId(enquiryId); // Set correct ID manually
             if (reply != null && !reply.isEmpty()) {
                 enquiry.reply(reply);
-                // enquiry.setReplyBy(staffName);
+            }
+            if (staffName != null && !staffName.isEmpty()) {
+                enquiry.setReplyBy(staffName);
             }
 
             enquiries.add(enquiry);

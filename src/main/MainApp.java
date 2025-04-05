@@ -11,28 +11,30 @@ public class MainApp {
     public static void main(String[] args) {
         String regex_pattern = "^[sStT]\\d{7}[a-zA-Z]$";
         Scanner sc = new Scanner(System.in);
-
+        
+        // ===== Initialize Controllers =====
+        AuthController authController = new AuthController();
+        ApplicationController applicationController = new ApplicationController();
+        EnquiryController enquiryController = new EnquiryController();
+        OfficerController officerController = new OfficerController();
+        ManagerController managerController = new ManagerController(officerController, applicationController);
+        ApplicantController applicantController = new ApplicantController(applicationController);
+        
         // ===== Load Data =====
-        ExcelReader.ExcelData data = ExcelReader.loadAllData("src/data/CombinedExcel.xlsx");
+        ExcelReader.ExcelData data = ExcelReader.loadAllData("src/data/CombinedExcel.xlsx", authController);
         if (data == null) {
             System.out.println("Failed to load data from Excel file. Exiting...");
             sc.close();
             return;
         }
-
-        // ===== Initialize Controllers =====
-        AuthController authController = new AuthController();
-        ApplicationController applicationController = new ApplicationController();
-        OfficerController officerController = new OfficerController();
-        EnquiryController enquiryController = new EnquiryController();
-        ManagerController managerController = new ManagerController(officerController, applicationController);
-        ApplicantController applicantController = new ApplicantController(applicationController, enquiryController);
-
-        // ===== Load Data into Controllers =====
+        
+        // ===== Load Data into System State Management =====
         for (Applicant a : data.applicants) authController.addUser(a);
         for (HDBOfficer o : data.officers) authController.addUser(o);
         for (HDBManager m : data.managers) authController.addUser(m);
         ProjectRegistry.loadProjects(data.projects);
+        EnquiryRegistry.loadEnquiries(data.enquiries);
+        ApplicationRegistry.loadApplications(data.applications);
 
         // ===== Login Loop =====
         while (true) {

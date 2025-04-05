@@ -6,11 +6,9 @@ import java.util.List;
 
 public class ApplicantController {
     private final ApplicationController applicationController;
-    private final EnquiryController enquiryController;
 
-    public ApplicantController(ApplicationController ac, EnquiryController ec) {
-        this.applicationController = ac;
-        this.enquiryController = ec;
+    public ApplicantController(ApplicationController applicationController) {
+        this.applicationController = applicationController;
     }
 
     public void getAvailableProjects(Applicant app) {
@@ -69,18 +67,6 @@ public class ApplicantController {
 
     public void viewApplicationStatus(Applicant applicant) {
         applicationController.viewApplicationStatus(applicant);
-    }
-
-    public void submitEnquiry(String nric, String project, String message) {
-        enquiryController.submitEnquiry(nric, project, message);
-    }
-
-    public List<Enquiry> getUserEnquiries(String nric) {
-        return enquiryController.getUserEnquiries(nric);
-    }
-
-    public boolean deleteEnquiry(int id, String nric) {
-        return enquiryController.deleteEnquiry(id, nric);
     }
 }
 

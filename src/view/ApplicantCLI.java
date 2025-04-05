@@ -5,11 +5,9 @@ import controller.ApplicationController;
 import controller.AuthController;
 import controller.EnquiryController;
 import model.Applicant;
-import model.Enquiry;
 import model.Project;
 import model.ProjectRegistry;
 
-import java.util.List;
 import java.util.Scanner;
 
 public class ApplicantCLI {
@@ -76,40 +74,11 @@ public class ApplicantCLI {
             String flatType = scanner.nextLine();
             applicationController.submitApplication(applicant, projectName, flatType);
         }
-
     }
 
     private void manageEnquiries() {
-        int choice;
-        do {
-            System.out.println("\n📩 Enquiry Management");
-            System.out.println("1. Submit Enquiry");
-            System.out.println("2. View My Enquiries");
-            System.out.println("3. Delete Enquiry");
-            System.out.println("4. Back");
-            System.out.print("Choice: ");
-            choice = Integer.parseInt(scanner.nextLine());
-
-            switch (choice) {
-                case 1 -> {
-                    System.out.print("Project Name: ");
-                    String project = scanner.nextLine();
-                    System.out.print("Your Message: ");
-                    String msg = scanner.nextLine();
-                    enquiryController.submitEnquiry(applicant.getNric(), project, msg);
-                }
-                case 2 -> {
-                    List<Enquiry> list = enquiryController.getUserEnquiries(applicant.getNric());
-                    list.forEach(System.out::println);
-                }
-                case 3 -> {
-                    System.out.print("Enquiry ID to delete: ");
-                    int id = Integer.parseInt(scanner.nextLine());
-                    boolean deleted = enquiryController.deleteEnquiry(id, applicant.getNric());
-                    System.out.println(deleted ? "Deleted" : "Not found or not your enquiry");
-                }
-            }
-        } while (choice != 4);
+        EnquiryCLI enquiryCLI = new EnquiryCLI(applicant, enquiryController);
+        enquiryCLI.start();
     }
 
     private void changePassword() {

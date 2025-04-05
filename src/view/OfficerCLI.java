@@ -6,7 +6,6 @@ import controller.EnquiryController;
 import model.*;
 
 import java.util.Scanner;
-import java.util.List;;
 
 public class OfficerCLI {
 
@@ -35,12 +34,12 @@ public class OfficerCLI {
                 case 2 -> registerToProject();
                 case 3 -> bookFlatForApplicant();
                 case 4 -> generateReceipt();
-                case 5 -> viewAndReplyEnquiries();
+                case 5 -> manageEnquiries();
                 case 6 -> System.out.println("Logging out...");
                 default -> System.out.println("Invalid option.");
             }
 
-        } while (choice != 5);
+        } while (choice != 6);
     }
 
     private void showMenu() {
@@ -49,7 +48,8 @@ public class OfficerCLI {
         System.out.println("2. Register to Handle Project");
         System.out.println("3. Book Flat for Applicant");
         System.out.println("4. Generate Receipt");
-        System.out.println("5. Logout");
+        System.out.println("5. Manage Enquiries");
+        System.out.println("6. Logout");
         System.out.print("Select an option: ");
     }
 
@@ -89,6 +89,11 @@ public class OfficerCLI {
         officerController.bookFlat(officer, app);
     }
 
+    private void manageEnquiries() {
+        EnquiryCLI enquiryCLI = new EnquiryCLI(officer, enquiryController);
+        enquiryCLI.start();
+    }
+
     private void generateReceipt() {
         System.out.print("Enter Applicant NRIC: ");
         String nric = scanner.nextLine();
@@ -101,19 +106,5 @@ public class OfficerCLI {
 
         String receipt = officerController.generateReceipt(app);
         System.out.println(receipt);
-    }
-
-    private void viewAndReplyEnquiries() {
-        if (!officer.isAssigned()) return;
-        List<Enquiry> list = enquiryController.getProjectEnquiries(officer.getAssignedProject());
-        list.forEach(System.out::println);
-
-        System.out.print("Reply to Enquiry ID (0 to skip): ");
-        int id = Integer.parseInt(scanner.nextLine());
-        if (id != 0) {
-            System.out.print("Reply message: ");
-            String reply = scanner.nextLine();
-            enquiryController.replyToEnquiry(id, reply);
-        }
     }
 }

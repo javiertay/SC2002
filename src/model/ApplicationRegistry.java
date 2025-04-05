@@ -5,7 +5,13 @@ import java.util.*;
 public class ApplicationRegistry {
 
     private static final Map<String, Application> applicationMap = new HashMap<>();
-    // Key = Applicant NRIC → Application
+
+    public static void loadApplications(List<Application> applications) {
+        applicationMap.clear(); // Start fresh
+        for (Application application : applications) {
+            applicationMap.put(application.getApplicant().getNric(), application);
+        }
+    }
 
     // Add application
     public static void addApplication(String nric, Application application) {

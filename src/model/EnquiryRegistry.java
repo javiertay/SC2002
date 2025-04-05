@@ -5,6 +5,14 @@ import java.util.*;
 public class EnquiryRegistry {
     private static final List<Enquiry> enquiryList = new ArrayList<>();
 
+    // Load once at startup
+    public static void loadEnquiries(List<Enquiry> enquiries) {
+        enquiryList.clear();
+        for (Enquiry enquiry : enquiries) {
+            enquiryList.add(enquiry);
+        }
+    }
+
     public static void addEnquiry(Enquiry e) {
         enquiryList.add(e);
     }
