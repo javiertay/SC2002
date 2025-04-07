@@ -1,10 +1,23 @@
 package model;
 
-public class HDBOfficer extends User{
+import java.util.HashMap;
+import java.util.Map;
+
+public class HDBOfficer extends Applicant{
     private String assignedProjectName = null;
+    private final Map<String, RegistrationStatus> registrationStatus; // Project name -> Status ("Pending", "Approved", "Rejected")
+
+    public enum RegistrationStatus {
+        NOT_REGISTERED,
+        PENDING,
+        APPROVED,
+        REJECTED
+    }
 
     public HDBOfficer(String name, String nric, String password, int age, String maritalStatus) {
         super(name, nric, password, age, maritalStatus);
+        this.assignedProjectName = null;
+        this.registrationStatus = new HashMap<>();
     }
 
     public boolean isAssigned() {
@@ -19,13 +32,26 @@ public class HDBOfficer extends User{
         return assignedProjectName;
     }
 
-    public void unassignProject() {
-        this.assignedProjectName = null;
-    }
-
     @Override
     public String getRole() {
         return "HDBOfficer";
+    }
+
+    public RegistrationStatus getRegistrationStatus(String projectName) {
+        return registrationStatus.getOrDefault(projectName, RegistrationStatus.NOT_REGISTERED);
+    }
+
+    public void setRegistrationStatus(String projectName, RegistrationStatus status) {
+        registrationStatus.put(projectName, status);
+    }
+
+    public boolean hasActiveRegistration(String projectName) {
+        RegistrationStatus status = registrationStatus.get(projectName);
+        return status == RegistrationStatus.PENDING || status == RegistrationStatus.APPROVED;
+    }
+
+    public boolean isRegisteredToAnotherProject() {
+        return registrationStatus.containsValue(RegistrationStatus.APPROVED);
     }
 
     // Officer functionality
@@ -48,15 +74,4 @@ public class HDBOfficer extends User{
             System.out.println("No units available for the selected flat type.");
         }
     }
-
-    // public String generateReceipt(Application app, Project project) {
-    //     return "=== Flat Booking Receipt ===\n" +
-    //            "Applicant NRIC: " + app.getApplicant().getNric() + "\n" +
-    //            "Age: " + app.getApplicant().getAge() + "\n" +
-    //            "Marital Status: " + app.getApplicant().getMaritalStatus() + "\n" +
-    //            "Project: " + project.getName() + "\n" +
-    //            "Neighborhood: " + project.getNeighborhood() + "\n" +
-    //            "Flat Type: " + app.getFlatType() + "\n" +
-    //            "Status: " + app.getStatus() + "\n";
-    // }
 }

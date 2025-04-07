@@ -37,4 +37,29 @@ public class ApplicationRegistry {
     public static boolean hasApplication(String nric) {
         return applicationMap.containsKey(nric);
     }
+
+    public static Application getApplicationByNricAndProject(String nric, String projectName) {
+        for (Application application : applicationMap.values()) {
+            if (application.getApplicant().getNric().equalsIgnoreCase(nric) &&
+                application.getProject().getName().equalsIgnoreCase(projectName)) {
+                return application;
+            }
+        }
+        return null;
+    }
+    
+    public static boolean hasUserAppliedForProject(String nric, String projectName) {
+        Application application = applicationMap.get(nric);
+        if (application == null) {
+            return false;
+        }
+    
+        Project project = application.getProject();
+        if (project == null) {
+            return false;
+        }
+    
+        return project.getName().equalsIgnoreCase(projectName);
+    }
+    
 }

@@ -2,95 +2,69 @@ package controller;
 
 import model.*;
 
-import java.util.*;
-
 public class OfficerController {
-    private final Set<String> officerProjectRequests = new HashSet<>(); // Tracks registration NRIC+ProjectName
-    private final Set<String> approvedOfficers = new HashSet<>(); // Tracks approved officers by NRIC+ProjectName
-
-    // Officer requests to register to handle a project
-    public boolean registerToProject(HDBOfficer officer, String projectName) {
-        if (officer.isAssigned()) {
-            System.out.println("❌ Officer is already assigned to a project.");
+    
+    public boolean requestProjectRegistration(HDBOfficer officer, String projectName) {
+        // Check if officer already applied for the project
+        if (officer.hasActiveRegistration(projectName)) {
+            System.out.println("You already have an active registration for this project.");
             return false;
         }
 
-        Project project = ProjectRegistry.getProjectByName(projectName);
-        if (project == null) {
-            System.out.println("❌ Project not found.");
+        // Check if officer applied to the project as an applicant
+        if (ApplicationRegistry.hasUserAppliedForProject(officer.getNric(), projectName)) {
+            System.out.println("You have already applied for this project as an applicant.");
             return false;
         }
 
-        String key = officer.getNric() + "@" + projectName;
-        if (officerProjectRequests.contains(key)) {
-            System.out.println("⚠️ Already registered for this project.");
-            return false;
-        }
-
-        officerProjectRequests.add(key);
-        System.out.println("📨 Officer registration request submitted. Awaiting Manager approval.");
+        // Set registration status to pending
+        officer.setRegistrationStatus(projectName, HDBOfficer.RegistrationStatus.PENDING);
+        System.out.println("Registration request submitted. Awaiting Manager approval.");
         return true;
     }
 
-    // To be called by ManagerController when approved
-    public void approveOfficer(HDBOfficer officer, String projectName) {
-        String key = officer.getNric() + "@" + projectName;
-        if (officerProjectRequests.contains(key)) {
-            officer.assignToProject(projectName);
-            approvedOfficers.add(key);
-            System.out.println("✅ Officer approved for project: " + projectName);
-        }
+    public HDBOfficer.RegistrationStatus viewRegistrationStatus(HDBOfficer officer, String projectName) {
+        return officer.getRegistrationStatus(projectName);
     }
 
-    // Officer books flat for applicant (if successful)
-    public boolean bookFlat(HDBOfficer officer, Application app) {
-        if (!officer.isAssigned() || !officer.getAssignedProject().equals(app.getProject().getName())) {
-            System.out.println("❌ Officer not assigned to this project.");
+    public Project viewAssignedProjectDetails(HDBOfficer officer) {
+        String projectName = officer.getAssignedProject();
+        return ProjectRegistry.getProjectByName(projectName);
+    }
+
+    // Flat selection: update applicant profile and project flat availability
+    public boolean assignFlat(HDBOfficer officer, String applicantNric, String flatType) {
+        // Retrieve applicant's application
+        Application application = ApplicationRegistry.getApplicationByNricAndProject(applicantNric, officer.getAssignedProject());
+        if (application == null || application.getStatus() != Application.Status.SUCCESSFUL) {
+            System.out.println("No successful application found for this applicant in your project.");
             return false;
         }
 
-        if (!app.isBookable()) {
-            System.out.println("❌ Applicant is not in 'SUCCESSFUL' state.");
-            return false;
-        }
+        // Update application status to booked
+        application.setStatus(Application.Status.BOOKED);
+        application.setFlatType(flatType);
 
-        FlatType flat = app.getProject().getFlatType(app.getFlatType());
-        if (flat == null || !flat.isAvailable()) {
-            System.out.println("❌ Flat type unavailable.");
-            return false;
-        }
+        // Update project flat availability
+        Project project = ProjectRegistry.getProjectByName(officer.getAssignedProject());
+        project.reduceFlatAvailability(flatType);
 
-        flat.bookUnit();
-        app.setStatus(Application.Status.BOOKED);
-        System.out.println("🏠 Flat successfully booked.");
+        System.out.println("Flat assigned successfully.");
         return true;
     }
 
-    // Generate receipt
-    public String generateReceipt(Application app) {
-        if (!app.isBooked()) {
-            return "❌ No booked flat for applicant " + app.getApplicant().getNric();
-        }
+    // Generate flat booking receipt
+    public void generateReceipt(Application application) {
+        Applicant applicant = application.getApplicant();
+        Project project = application.getProject();
 
-        return "\n==== Booking Receipt ====\n" +
-                "Applicant: " + app.getApplicant().getNric() +
-                "\nAge: " + app.getApplicant().getAge() +
-                "\nMarital Status: " + app.getApplicant().getMaritalStatus() +
-                "\nProject: " + app.getProject().getName() +
-                "\nNeighborhood: " + app.getProject().getNeighborhood() +
-                "\nFlat Type: " + app.getFlatType() +
-                "\nStatus: " + app.getStatus();
-    }
-
-    public boolean isOfficerApproved(String nric, String projectName) {
-        return approvedOfficers.contains(nric + "@" + projectName);
-    }
-
-    public Set<String> getOfficerRequests() {
-        return officerProjectRequests;
-    }
-
-    public Set<String> getApprovedOfficers() {
-        return approvedOfficers;
+        System.out.println("\n===== Flat Booking Receipt =====");
+        System.out.println("Applicant Name: " + applicant.getName());
+        System.out.println("NRIC: " + applicant.getNric());
+        System.out.println("Age: " + applicant.getAge());
+        System.out.println("Marital Status: " + applicant.getMaritalStatus());
+        System.out.println("Flat Type: " + application.getFlatType());
+        System.out.println("Project: " + project.getProjectName() + " (" + project.getNeighborhood() + ")");
+        System.out.println("================================\n");
     }
 }
