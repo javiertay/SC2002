@@ -4,7 +4,7 @@ import model.*;
 
 public class OfficerController {
     
-    public boolean requestProjectRegistration(HDBOfficer officer, String projectName) {
+    public boolean reqToHandleProject(HDBOfficer officer, String projectName) {
         // Check if officer already applied for the project
         if (officer.hasActiveRegistration(projectName)) {
             System.out.println("You already have an active registration for this project.");
@@ -43,11 +43,10 @@ public class OfficerController {
 
         // Update application status to booked
         application.setStatus(Application.Status.BOOKED);
-        application.setFlatType(flatType);
 
         // Update project flat availability
         Project project = ProjectRegistry.getProjectByName(officer.getAssignedProject());
-        project.reduceFlatAvailability(flatType);
+        project.getFlatType(flatType).bookUnit();
 
         System.out.println("Flat assigned successfully.");
         return true;
@@ -64,7 +63,7 @@ public class OfficerController {
         System.out.println("Age: " + applicant.getAge());
         System.out.println("Marital Status: " + applicant.getMaritalStatus());
         System.out.println("Flat Type: " + application.getFlatType());
-        System.out.println("Project: " + project.getProjectName() + " (" + project.getNeighborhood() + ")");
+        System.out.println("Project: " + project.getName() + " (" + project.getNeighborhood() + ")");
         System.out.println("================================\n");
     }
 }

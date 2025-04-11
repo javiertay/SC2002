@@ -88,6 +88,26 @@ public class ManagerController {
         project.incrementOfficerSlot();
     }
 
+    public void processOfficerRegistrationDecision(HDBOfficer officer, String projectName, boolean approved) {
+        if (approved) {
+            // Update officer profile
+            officer.setRegistrationStatus(projectName, HDBOfficer.RegistrationStatus.APPROVED);
+            officer.assignToProject(projectName);
+            // Update the corresponding project object by adding the officer
+            Project project = ProjectRegistry.getProjectByName(projectName);
+            if (project != null) {
+                project.addOfficer(officer.getName());
+                project.incrementOfficerSlot();
+                System.out.println("Officer added to project: " + projectName);
+            }
+            System.out.println("Officer registration approved for project: " + projectName);
+        } else {
+            officer.setRegistrationStatus(projectName, HDBOfficer.RegistrationStatus.REJECTED);
+            System.out.println("Officer registration rejected for project: " + projectName);
+        }
+    }
+    
+
     // Approve/reject application based on availability
     public void approveApplication(String applicantNRIC, boolean approved) {
         Application app = applicationController.getApplicationByNRIC(applicantNRIC);

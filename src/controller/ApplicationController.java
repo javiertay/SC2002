@@ -1,9 +1,56 @@
 package controller;
 
 import model.*;
+
+import java.util.List;
 import java.util.Map;
 
 public class ApplicationController {
+    public void getAllAvailableProjects(Applicant applicant) {
+        List<Project> projects = ProjectRegistry.filterByVisibility(true);
+        
+        if (projects.isEmpty()) {
+            System.out.println("No projects found.");
+            return;
+        }
+        
+        System.out.println("\nAvailable Projects for You:");
+        boolean isEligible = false;
+        for (Project project : projects) {
+            boolean show2Room = false;
+            boolean show3Room = false;
+
+            if (applicant.getMaritalStatus().equalsIgnoreCase("single") && applicant.getAge() >= 35) {
+                show2Room = true;
+            } else if (applicant.getMaritalStatus().equalsIgnoreCase("married") && applicant.getAge() >= 21) {
+                show2Room = true;
+                show3Room = true;
+            } else {
+                continue;
+            }
+
+            isEligible = true; // Check if the applicant is eligible for any project
+
+            System.out.println("  Project Name: " + project.getName());
+            System.out.println("  Neighborhood: " + project.getNeighborhood());
+            System.out.println("  Flat Types:");
+            for (FlatType ft : project.getFlatTypes().values()) {
+                String type = ft.getType();
+                if ((type.equalsIgnoreCase("2-Room") && show2Room) ||
+                    (type.equalsIgnoreCase("3-Room") && show3Room)) {
+                    System.out.println("    - " + type + ": " + ft.getRemainingUnits() + " units left");
+                }
+            }
+            System.out.println("  Project Open Date: " + project.getOpenDate());
+            System.out.println("  Project Close Date: " + project.getCloseDate());
+
+            System.out.println("----------------------------------");
+        }
+
+        if (!isEligible) {
+            System.out.println("You are not eligible for any projects.");
+        }
+    }
     // Submit application
     public boolean submitApplication(Applicant applicant, String projectName, String flatType) {
         if (ApplicationRegistry.hasApplication(applicant.getNric())) {

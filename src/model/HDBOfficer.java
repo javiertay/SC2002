@@ -54,24 +54,28 @@ public class HDBOfficer extends Applicant{
         return registrationStatus.containsValue(RegistrationStatus.APPROVED);
     }
 
+    public Map<String, RegistrationStatus> getAllRegistrations() {
+        return new HashMap<>(registrationStatus);
+    }
+
     // Officer functionality
-    public boolean canBook(Application app) {
-        return app != null && app.getStatus() == Application.Status.SUCCESSFUL;
-    }
+    // public boolean canBook(Application app) {
+    //     return app != null && app.getStatus() == Application.Status.SUCCESSFUL;
+    // }
 
-    public void bookFlat(Application app, Project project) {
-        if (!canBook(app)) {
-            System.out.println("Booking not allowed. Status: " + app.getStatus());
-            return;
-        }
+    // public void bookFlat(Application app, Project project) {
+    //     if (!canBook(app)) {
+    //         System.out.println("Booking not allowed. Status: " + app.getStatus());
+    //         return;
+    //     }
 
-        FlatType flat = project.getFlatType(app.getFlatType());
-        if (flat != null && flat.isAvailable()) {
-            flat.bookUnit();
-            app.setStatus(Application.Status.BOOKED);
-            System.out.println("Flat successfully booked for applicant " + app.getApplicant().getNric());
-        } else {
-            System.out.println("No units available for the selected flat type.");
-        }
-    }
+    //     FlatType flat = project.getFlatType(app.getFlatType());
+    //     if (flat != null && flat.isAvailable()) {
+    //         flat.bookUnit();
+    //         app.setStatus(Application.Status.BOOKED);
+    //         System.out.println("Flat successfully booked for applicant " + app.getApplicant().getNric());
+    //     } else {
+    //         System.out.println("No units available for the selected flat type.");
+    //     }
+    // }
 }
