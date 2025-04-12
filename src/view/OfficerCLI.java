@@ -1,6 +1,5 @@
 package view;
 
-import controller.ApplicationController;
 import controller.OfficerController;
 import controller.EnquiryController;
 import model.*;
@@ -13,14 +12,14 @@ public class OfficerCLI {
 
     private final HDBOfficer officer;
     private final OfficerController officerController;
-    private final ApplicationController applicationController;
     private final EnquiryController enquiryController;
+    private final ApplicationCLI applicationCLI;
     private final Scanner scanner;
 
-    public OfficerCLI(HDBOfficer officer, OfficerController officerController, ApplicationController applicationController, EnquiryController enquiryController) {
+    public OfficerCLI(HDBOfficer officer, OfficerController officerController, EnquiryController enquiryController, ApplicationCLI applicationCLI) {
+        this.applicationCLI = applicationCLI;
         this.officer = officer;
         this.officerController = officerController;
-        this.applicationController = applicationController;
         this.enquiryController = enquiryController;
         this.scanner = new Scanner(System.in);
     }
@@ -32,27 +31,50 @@ public class OfficerCLI {
             choice = Integer.parseInt(scanner.nextLine());
 
             switch (choice) {
-                case 1 -> registerForProject();
-                case 2 -> viewRegistrationStatus();
-                case 3 -> viewAssignedProjectDetails();
-                case 4 -> flatSelectionWorkflow();
-                case 5 -> generateReceipt();
-                case 6 -> manageEnquiries();
-                case 7 -> System.out.println("Logging out...");
+                case 1 -> applicationCLI.start(officer);    
+                case 2 -> registerForProject();
+                case 3 -> viewRegistrationStatus();
+                case 4 -> {
+                            if (!isActionAllowed()) break;
+                            viewAssignedProjectDetails();
+                        }
+                case 5 -> {
+                            if (!isActionAllowed()) break;
+                            flatSelectionWorkflow();
+                        }
+                case 6 -> {
+                            if (!isActionAllowed()) break;
+                            generateReceipt();
+                        }
+                case 7 -> {
+                            if (!isActionAllowed()) break;
+                            manageEnquiries();
+                        }
+                case 8 -> System.out.println("Logging out...");
                 default -> System.out.println("Invalid option. Please try again.");
             }
-        } while (choice != 7);
+        } while (choice != 8);
     }
 
     private void showMenu() {
         System.out.println("\n=== HDB Officer Menu ===");
-        System.out.println("1. Register for a Project");
-        System.out.println("2. View Registration Status");
-        System.out.println("3. View Assigned Project Details");
-        System.out.println("4. Flat Selection (Assign Flat)");
-        System.out.println("5. Generate Flat Booking Receipt");
-        System.out.println("6. Manage Enquiries");
-        System.out.println("7. Logout");
+        System.out.println("1. HDB Application Manager");
+        System.out.println("2. Register for a Project");
+        System.out.println("3. View Registration Status");
+
+        if (officer.isAssigned()) {
+            System.out.println("4. View Assigned Project Details");
+            System.out.println("5. Flat Selection (Assign Flat)");
+            System.out.println("6. Generate Flat Booking Receipt");
+            System.out.println("7. Manage Enquiries");
+        } else {
+            System.out.println("4. View Assigned Project Details (Unavailable)");
+            System.out.println("5. Flat Selection (Unavailable)");
+            System.out.println("6. Generate Flat Booking Receipt (Unavailable)");
+            System.out.println("7. Manage Enquiries (Unavailable)");
+        }
+
+        System.out.println("8. Logout");
         System.out.print("Select an option: ");
     }
 
@@ -136,5 +158,13 @@ public class OfficerCLI {
     private void manageEnquiries() {
         EnquiryCLI enquiryCLI = new EnquiryCLI(officer, enquiryController);
         enquiryCLI.start();
+    }
+
+    private boolean isActionAllowed() {
+        if (!officer.isAssigned()) {
+            System.out.println("You are not assigned to any project yet.");
+            return false;
+        }
+        return true;
     }
 }

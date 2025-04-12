@@ -53,29 +53,32 @@ public class ApplicationCLI {
         System.out.print("\nEnter Project Name: ");
         String projectName = scanner.nextLine().trim();
         
-        if (applicant instanceof HDBOfficer officer) {
-            String assignedProjectName = officer.getAssignedProject();
-            if (projectName.equalsIgnoreCase(assignedProjectName)){
-                System.out.println("You cannot apply to projects you are handling!");
-                return;
-            }
-        }
-
         Project project = ProjectRegistry.getProjectByName(projectName);
-        if (project == null) {
-            System.out.println("Project not found.");
+        String flatType;
+
+        if (applicant.getMaritalStatus().equalsIgnoreCase("single")) {
+            flatType = "2-Room";
+            System.out.println("As a single applicant, you will automatically be assigned a 2-Room flat.");
+        } else if (applicant.getMaritalStatus().equalsIgnoreCase("married")) {
+            System.out.println("Available Flat Types:");
+            project.getFlatTypes().forEach((type, flatTypeObj) -> {
+                int remainingUnits = flatTypeObj.getRemainingUnits();
+                System.out.println("- " + type + ": " + remainingUnits + " units left");
+            });
+
+            System.out.print("Enter Flat Type (e.g., 2-Room or 3-Room): ");
+            flatType = scanner.nextLine().trim();
+        } else {
+            System.out.println("You are not eligible to apply for a flat.");
             return;
         }
 
-        System.out.println("Available Flat Types:");
-        for (String type : project.getFlatTypes().keySet()) {
-            System.out.println("- " + type);
+        boolean success = applicationController.submitApplication(applicant, projectName, flatType);
+        if (success) {
+            System.out.println("Application process completed successfully!");
+        } else {
+            System.out.println("Application failed. Please try again.");
         }
-
-        System.out.print("Enter Flat Type (e.g., 2-Room or 3-Room): ");
-        String flatType = scanner.nextLine().trim();
-
-        applicationController.submitApplication(applicant, projectName, flatType);
     }
 
     private void viewApplicationStatus(Applicant applicant) {

@@ -1,8 +1,6 @@
 package model;
 
 public class Applicant extends User {
-    private boolean hasApplied = false;
-
     public Applicant(String name, String nric, String password, int age, String maritalStatus) {
         super(name, nric, password, age, maritalStatus);
     }
@@ -14,14 +12,6 @@ public class Applicant extends User {
             return true;
         }
         return false;
-    }
-
-    public boolean hasApplied() {
-        return hasApplied;
-    }
-
-    public void setHasApplied(boolean applied) {
-        this.hasApplied = applied;
     }
 
     @Override

@@ -28,7 +28,7 @@ public class ApplicationRegistry {
         return applicationMap.remove(nric);
     }
 
-    // Get all applications
+    // Get all applications regardless of visibility and status
     public static Map<String, Application> getAllApplications() {
         return applicationMap;
     }

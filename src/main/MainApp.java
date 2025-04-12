@@ -16,10 +16,10 @@ public class MainApp {
         ApplicationController applicationController = new ApplicationController();
         EnquiryController enquiryController = new EnquiryController();
         OfficerController officerController = new OfficerController();
-        ManagerController managerController = new ManagerController(officerController, applicationController);
-        ApplicantController applicantController = new ApplicantController(applicationController);
+        ManagerController managerController = new ManagerController(applicationController);
         
         LoginCLI loginCLI = new LoginCLI(authController, sc);
+        ApplicationCLI applicationCLI = new ApplicationCLI(applicationController);
 
         // ===== Load Data =====
         ExcelReader.ExcelData data = ExcelReader.loadAllData("src/data/CombinedExcel.xlsx", authController);
@@ -46,11 +46,11 @@ public class MainApp {
             // ===== Route to CLI Based on Role =====
             switch (user.getRole()) {
                 case "Applicant" -> {
-                    ApplicantCLI cli = new ApplicantCLI((Applicant) user, applicantController, applicationController, enquiryController, authController);
+                    ApplicantCLI cli = new ApplicantCLI((Applicant) user, enquiryController, authController, applicationCLI);
                     cli.start();
                 }
                 case "HDBOfficer" -> {
-                    OfficerCLI cli = new OfficerCLI((HDBOfficer) user, officerController, applicationController, enquiryController);
+                    OfficerCLI cli = new OfficerCLI((HDBOfficer) user, officerController, enquiryController, applicationCLI);
                     cli.start();
                 }
                 case "HDBManager" -> {

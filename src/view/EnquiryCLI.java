@@ -37,8 +37,8 @@ public class EnquiryCLI {
                 case 3 -> editEnquiry();
                 case 4 -> deleteEnquiry();
                 case 5 -> {
-                    System.out.println("Exiting Enquiry Management.");
-                    System.out.println();
+                        System.out.println("Exiting Enquiry Management.");
+                        System.out.println();
                     }
                 default -> System.out.println("Invalid option. Please try again.");
             }
@@ -126,7 +126,10 @@ public class EnquiryCLI {
             switch (choice) {
                 case 1 -> viewEnquiriesForStaff();
                 case 2 -> replyToEnquiry();
-                case 3 -> System.out.println("Exiting Enquiry Management.");
+                case 3 -> {
+                        System.out.println("Exiting Enquiry Management.");
+                        System.out.println();
+                    }
                 default -> System.out.println("Invalid option. Please try again.");
             }
         } while (choice != 3);

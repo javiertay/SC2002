@@ -2,13 +2,25 @@ package controller;
 
 import model.*;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
 public class ApplicationController {
+
+    // View all available projects for the applicant based on age and marital status
     public void getAllAvailableProjects(Applicant applicant) {
-        List<Project> projects = ProjectRegistry.filterByVisibility(true);
+        List<Project> projects = ProjectRegistry.filterByVisibility(true).stream()
+                .filter(project -> !LocalDate.now().isAfter(project.getCloseDate()))
+                .toList();
         
+        if (applicant.getMaritalStatus().equalsIgnoreCase("single")) {
+            projects = projects.stream().filter(project -> {
+                FlatType twoRoom = project.getFlatTypes().get("2-Room");
+                return twoRoom != null && twoRoom.getRemainingUnits() > 0;
+            }).toList();
+        }        
+
         if (projects.isEmpty()) {
             System.out.println("No projects found.");
             return;
@@ -51,6 +63,7 @@ public class ApplicationController {
             System.out.println("You are not eligible for any projects.");
         }
     }
+
     // Submit application
     public boolean submitApplication(Applicant applicant, String projectName, String flatType) {
         if (ApplicationRegistry.hasApplication(applicant.getNric())) {
@@ -58,12 +71,16 @@ public class ApplicationController {
             return false;
         }
 
-        if (applicant.hasApplied()) {
-            System.out.println("You have already applied for a project.");
-            return false;
+        Project project = ProjectRegistry.getProjectByName(projectName);
+
+        if (applicant instanceof HDBOfficer officer) {
+            String assignedProjectName = officer.getAssignedProject();
+            if (projectName.equalsIgnoreCase(assignedProjectName)) {
+                System.out.println("You cannot apply for projects you are handling!");
+                return false;
+            }
         }
 
-        Project project = ProjectRegistry.getProjectByName(projectName);
         if (project == null) {
             System.out.println("Project not found.");
             return false;
@@ -93,9 +110,7 @@ public class ApplicationController {
         // need to update this portion
         Application application = new Application(applicant, project, flatType);
         ApplicationRegistry.addApplication(applicant.getNric(), application);
-        applicant.setHasApplied(true);
 
-        System.out.println("Application submitted successfully.");
         return true;
     }
 
@@ -116,8 +131,7 @@ public class ApplicationController {
             System.out.println("No application found to withdraw.");
             return false;
         }
-
-        applicant.setHasApplied(false);
+        
         System.out.println("Application withdrawn successfully.");
         return true;
     }

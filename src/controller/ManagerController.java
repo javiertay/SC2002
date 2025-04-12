@@ -5,12 +5,9 @@ import model.*;
 import java.util.*;
 
 public class ManagerController {
-
-    private final OfficerController officerController;
     private final ApplicationController applicationController;
 
-    public ManagerController(OfficerController officerController, ApplicationController applicationController) {
-        this.officerController = officerController;
+    public ManagerController(ApplicationController applicationController) {
         this.applicationController = applicationController;
     }
 
