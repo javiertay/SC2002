@@ -10,7 +10,6 @@ public class LoginCLI {
     private final String NRIC_REGEX = "^[ST]\\d{7}[A-Z]$";
 
     public LoginCLI(AuthController authController, Scanner scanner) {
-        welcomeScreen();
         this.authController = authController;
         this.scanner = scanner;
     }
@@ -61,7 +60,7 @@ public class LoginCLI {
         return promptLogin();
     }
     
-    private final void welcomeScreen(){
+    public void welcomeScreen(){
         System.out.println("╔═════════════════════════════════════════════════════════════════════════════════════════════════════╗");
         System.out.println("║                          ███████╗  ████████╗  ██████╗  ███╗   ███╗ ███████╗                         ║");
         System.out.println("║                          ██╔═══██╗ ╚══██╔══╝ ██╔═══██╗ ████╗ ████║ ██╔════╝                         ║");
@@ -73,7 +72,6 @@ public class LoginCLI {
         System.out.println("║                         Welcome to Build-To-Order Management System (BTOMS)                         ║");
         System.out.println("║                                                                                                     ║");
         System.out.println("╚═════════════════════════════════════════════════════════════════════════════════════════════════════╝");
-        System.out.println( );
         System.out.println( );
         System.out.println("Login to proceed");
     }

@@ -35,7 +35,7 @@ public class ManagerCLI {
                 case 2 -> createProject();
                 case 3 -> deleteProject();
                 case 4 -> toggleVisibility();
-                case 5 -> approveOfficer();
+                case 5 -> approveOfficerRegistration();
                 case 6 -> approveApplication();
                 case 7 -> approveWithdrawal();
                 case 8 -> generateReport();
@@ -116,7 +116,7 @@ public class ManagerCLI {
         Project p = new Project(name, neighbourhood, openDate, closeDate, true, maxSlots, manager.getName());
         p.addFlatType("2-Room", twoRoom);
         p.addFlatType("3-Room", threeRoom);
-        managerController.createProject(p);
+        managerController.createProject(p, manager);
     }
 
     private void deleteProject() {
@@ -138,17 +138,28 @@ public class ManagerCLI {
         managerController.toggleProjectVisibility(name);
     }
 
-    private void approveOfficer() {
-        System.out.print("Officer NRIC: ");
-        String nric = scanner.nextLine();
-        System.out.print("Project Name: ");
-        String project = scanner.nextLine();
-
-        User user = authController.getUserByNRIC(nric);
-        if (user instanceof HDBOfficer officer) {
-            managerController.approveOfficerRegistration(officer, project);
-        } else {
-            System.out.println("Invalid officer.");
+    private void approveOfficerRegistration() {
+        // managerController.getAllOfficersByStatus();
+        while (true) {
+            managerController.viewPendingOfficerApplications(manager);
+    
+            System.out.print("Enter Officer NRIC to process (or 'back' to return): ");
+            String nric = scanner.nextLine().trim().toUpperCase();
+    
+            if (nric.equalsIgnoreCase("back")) {
+                return;
+            }
+    
+            System.out.print("Approve or Reject? (A/R): ");
+            String decision = scanner.nextLine().trim().toUpperCase();
+    
+            if (decision.equals("A")) {
+                managerController.processOfficerApplication(manager, nric, HDBOfficer.RegistrationStatus.APPROVED);
+            } else if (decision.equals("R")) {
+                managerController.processOfficerApplication(manager, nric, HDBOfficer.RegistrationStatus.REJECTED);
+            } else {
+                System.out.println("Invalid decision. Returning to menu.");
+            }
         }
     }
 

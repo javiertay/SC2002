@@ -1,6 +1,8 @@
 package main;
 
 import controller.*;
+
+import java.time.LocalDate;
 import java.util.Scanner;
 import model.*;
 import util.ExcelReader;
@@ -15,7 +17,7 @@ public class MainApp {
         ApplicationController applicationController = new ApplicationController();
         EnquiryController enquiryController = new EnquiryController();
         OfficerController officerController = new OfficerController();
-        ManagerController managerController = new ManagerController(applicationController);
+        ManagerController managerController = new ManagerController(applicationController, authController);
         
         LoginCLI loginCLI = new LoginCLI(authController, sc);
         ApplicationCLI applicationCLI = new ApplicationCLI(applicationController);
@@ -29,16 +31,56 @@ public class MainApp {
         }
         
         // ===== Load Data into System State Management =====
-        for (Applicant a : data.applicants) authController.addUser(a);
-        for (HDBOfficer o : data.officers) authController.addUser(o);
-        for (HDBManager m : data.managers) authController.addUser(m);
         ProjectRegistry.loadProjects(data.projects);
         EnquiryRegistry.loadEnquiries(data.enquiries);
         ApplicationRegistry.loadApplications(data.applications);
 
+        for (HDBOfficer officer : data.officers) {
+            for (Project project : data.projects) {
+                if (project.getOfficerList().contains(officer.getName())) {
+                    officer.assignToProject(project.getName());
+                    officer.setRegistrationStatus(project.getName(), HDBOfficer.RegistrationStatus.APPROVED);
+                }
+            }
+        }
+        for (HDBManager manager : data.managers) {
+            Project selectedProject = null;
+            LocalDate today = LocalDate.now();
+            LocalDate earliestFutureDate = LocalDate.MAX;
+
+            for (Project project : data.projects) {
+                if (!project.getManagerName().equalsIgnoreCase(manager.getName())) {
+                    continue; // Not this manager's project
+                }
+
+                LocalDate openDate = project.getOpenDate();
+                LocalDate closeDate = project.getCloseDate();
+
+                // If project is currently open
+                if ((openDate.isBefore(today) || openDate.isEqual(today))
+                        && (closeDate.isAfter(today) || closeDate.isEqual(today))) {
+                    selectedProject = project;
+                    break; // Prefer open project, stop searching
+                }
+
+                // If project is upcoming and earlier than current candidate
+                if (openDate.isAfter(today) && openDate.isBefore(earliestFutureDate)) {
+                    selectedProject = project;
+                    earliestFutureDate = openDate;
+                }
+            }
+
+            if (selectedProject != null) {
+                manager.assignToProject(selectedProject.getName());
+            }
+        }
+        for (Applicant a : data.applicants) authController.addUser(a);
+        for (HDBOfficer o : data.officers) authController.addUser(o);
+        for (HDBManager m : data.managers) authController.addUser(m);
+
         // ===== Login Loop =====
         while (true) {
-            System.out.println("\n=== Welcome to the BTO Management System ===");
+            loginCLI.welcomeScreen();
             User user = loginCLI.promptLogin();
             if (user == null) break;
 

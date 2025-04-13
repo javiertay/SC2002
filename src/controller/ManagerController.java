@@ -2,21 +2,46 @@ package controller;
 
 import model.*;
 
+import java.time.LocalDate;
 import java.util.*;
 
 public class ManagerController {
     private final ApplicationController applicationController;
+    private final AuthController authController;
 
-    public ManagerController(ApplicationController applicationController) {
+    public ManagerController(ApplicationController applicationController, AuthController authController) {
+        this.authController = authController;
         this.applicationController = applicationController;
     }
 
     // Create a new project
-    public void createProject(Project project) {
-        if (ProjectRegistry.exists(project.getName())) {
+    public void createProject(Project project, HDBManager manager) {
+        if (ProjectRegistry.exists(project.getName().trim())) {
             System.out.println("Project with this name already exists.");
             return;
         }
+
+        String managerProject = manager.getAssignedProject();
+
+        if (managerProject != null) {
+            Project existingProject = ProjectRegistry.getProjectByName(managerProject);
+
+            if (existingProject != null) {
+                LocalDate existingStart = existingProject.getOpenDate();
+                LocalDate existingEnd = existingProject.getCloseDate();
+                LocalDate newStart = project.getOpenDate();
+                LocalDate newEnd = project.getCloseDate();
+
+                boolean isOverlap = (newStart.isBefore(existingEnd) || newStart.isEqual(existingEnd)) &&
+                                    (newEnd.isAfter(existingStart) || newEnd.isEqual(existingStart));
+
+                if (isOverlap) {
+                    System.out.println("You are already managing a project ("+existingProject.getName()+") that overlaps with these dates.");
+                    return;
+                }
+            }
+        }
+
         ProjectRegistry.addProject(project);
         System.out.println("Project created successfully.");
     }
@@ -69,41 +94,125 @@ public class ManagerController {
     }
  
     // Approve officer registration
-    public void approveOfficerRegistration(HDBOfficer officer, String projectName) {
+    public boolean processOfficerApplication(HDBManager manager, String officerNric, HDBOfficer.RegistrationStatus targetStatus) {
+        String projectName = manager.getAssignedProject();
         Project project = ProjectRegistry.getProjectByName(projectName);
+    
         if (project == null) {
-            System.out.println("Project not found.");
-            return;
+            System.out.println("No active project assigned to manager.");
+            return false;
         }
     
-        if (!project.hasAvailableOfficerSlot()) {
-            System.out.println("No available officer slots in this project.");
-            return;
+        User user = authController.getUserByNRIC(officerNric);
+        if (!(user instanceof HDBOfficer officer)) {
+            System.out.println("Officer with NRIC " + officerNric + " not found.");
+            return false;
         }
-
-        // officerController.approveOfficer(officer, projectName);
-        project.incrementOfficerSlot();
-    }
-
-    public void processOfficerRegistrationDecision(HDBOfficer officer, String projectName, boolean approved) {
-        if (approved) {
-            // Update officer profile
-            officer.setRegistrationStatus(projectName, HDBOfficer.RegistrationStatus.APPROVED);
-            officer.assignToProject(projectName);
-            // Update the corresponding project object by adding the officer
-            Project project = ProjectRegistry.getProjectByName(projectName);
-            if (project != null) {
-                project.addOfficer(officer.getName());
-                project.incrementOfficerSlot();
-                System.out.println("Officer added to project: " + projectName);
+    
+        HDBOfficer.RegistrationStatus currentStatus = officer.getRegistrationStatus(projectName);
+        if (currentStatus != HDBOfficer.RegistrationStatus.PENDING) {
+            System.out.println("Officer did not apply or has already been processed.");
+            return false;
+        }
+    
+        // If approving, check slots
+        if (targetStatus == HDBOfficer.RegistrationStatus.APPROVED) {
+            if (!project.hasAvailableOfficerSlot()) {
+                System.out.println("No more officer slots available for this project.");
+                return false;
             }
-            System.out.println("Officer registration approved for project: " + projectName);
-        } else {
-            officer.setRegistrationStatus(projectName, HDBOfficer.RegistrationStatus.REJECTED);
-            System.out.println("Officer registration rejected for project: " + projectName);
+            // Assign officer to project
+            project.addOfficer(officer.getName());
+            officer.assignToProject(projectName);
         }
+    
+        // Update officer status
+        officer.setRegistrationStatus(projectName, targetStatus);
+    
+        String statusMessage = (targetStatus == HDBOfficer.RegistrationStatus.APPROVED) ? "approved" : "rejected";
+        System.out.println("Officer " + officer.getName() + " application has been " + statusMessage + ".");
+    
+        return true;
     }
     
+
+    /* Officer Managements: View, Approve, Reject */
+    public void getAllOfficersByStatus() {
+        List<HDBOfficer> allOfficers = new ArrayList<>();
+
+        for (User user : authController.getAllUsers().values()) {
+            if (user instanceof HDBOfficer officer) {
+                allOfficers.add(officer);
+            }
+        }
+
+        // === Pending Officers ===
+        System.out.println("\n=== Pending Officers ===");
+        boolean hasPending = false;
+
+        for (HDBOfficer officer : allOfficers) {
+            for (Map.Entry<String, HDBOfficer.RegistrationStatus> entry : officer.getAllRegistrations().entrySet()) {
+                if (entry.getValue() == HDBOfficer.RegistrationStatus.PENDING) {
+                    System.out.printf("- %s (NRIC: %s) | Project: %s | Status: %s\n",
+                        officer.getName(),
+                        officer.getNric(),
+                        entry.getKey(),
+                        entry.getValue());
+                    hasPending = true;
+                }
+            }
+        }
+
+        if (!hasPending) {
+            System.out.println("No pending officers found.");
+        }
+
+        // === Approved Officers ===
+        System.out.println("\n=== Approved Officers ===");
+        boolean hasApproved = false;
+
+        for (HDBOfficer officer : allOfficers) {
+            for (Map.Entry<String, HDBOfficer.RegistrationStatus> entry : officer.getAllRegistrations().entrySet()) {
+                if (entry.getValue() == HDBOfficer.RegistrationStatus.APPROVED) {
+                    System.out.printf("- %s (NRIC: %s) | Project: %s | Status: %s\n",
+                        officer.getName(),
+                        officer.getNric(),
+                        entry.getKey(),
+                        entry.getValue());
+                    hasApproved = true;
+                }
+            }
+        }
+
+        if (!hasApproved) {
+            System.out.println("No approved officers found.");
+        }
+
+        System.out.println();
+    }
+
+    public void viewPendingOfficerApplications(HDBManager manager) {
+        String projectName = manager.getAssignedProject();
+        List<HDBOfficer> pendingOfficers = new ArrayList<>();
+
+        for (User user : authController.getAllUsers().values()) {
+            if (user instanceof HDBOfficer officer) {
+                HDBOfficer.RegistrationStatus status = officer.getRegistrationStatus(projectName);
+                if (status == HDBOfficer.RegistrationStatus.PENDING) {
+                    pendingOfficers.add(officer);
+                }
+            }
+        }
+
+        if (pendingOfficers.isEmpty()) {
+            System.out.println("No pending officer applications for your project.");
+        } else {
+            System.out.println("\n=== Pending Officer Applications ===");
+            for (HDBOfficer officer : pendingOfficers) {
+                System.out.println("- Name: " + officer.getName() + " | NRIC: " + officer.getNric());
+            }
+        }
+    }
 
     // Approve/reject application based on availability
     public void approveApplication(String applicantNRIC, boolean approved) {

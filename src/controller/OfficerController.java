@@ -17,6 +17,12 @@ public class OfficerController {
             return false;
         }
 
+        Project project = ProjectRegistry.getProjectByName(projectName);
+        if (project == null) {
+            System.out.println("Project not found.");
+            return false;
+        }
+
         // Set registration status to pending
         officer.setRegistrationStatus(projectName, HDBOfficer.RegistrationStatus.PENDING);
         System.out.println("Registration request submitted. Awaiting Manager approval.");
