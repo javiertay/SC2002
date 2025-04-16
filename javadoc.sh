@@ -25,5 +25,5 @@ echo "Javadoc successfully generated in '$OUTPUT_DIR'"
 
 # to run
 # chmod +x javadoc.sh
-# ./javadoc
+# ./javadoc.sh
 # to view -> on terminal type "open docs" then double click on the html
