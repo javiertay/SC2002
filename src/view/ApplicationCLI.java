@@ -89,7 +89,7 @@ public class ApplicationCLI {
         System.out.print("Are you sure you want to withdraw your application? (Y/N): ");
         String confirmation = scanner.nextLine().trim().toLowerCase();
         if (confirmation.equals("y")) {
-            applicationController.withdrawApplication(applicant);
+            applicationController.reqToWithdrawApp(applicant);
         } else {
             System.out.println("Withdrawal cancelled.");
         }

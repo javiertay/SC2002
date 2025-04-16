@@ -20,6 +20,10 @@ public class FlatType {
         return totalUnits;
     }
 
+    public void setTotalUnits(int totalUnits) {
+        this.totalUnits = totalUnits;
+    }
+
     public int getRemainingUnits() {
         return remainingUnits;
     }
@@ -35,8 +39,6 @@ public class FlatType {
     }
 
     public void cancelBooking() {
-        if (remainingUnits < totalUnits) {
-            remainingUnits++;
-        }
+        remainingUnits++;
     }
 }

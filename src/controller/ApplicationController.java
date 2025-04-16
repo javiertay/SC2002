@@ -125,23 +125,135 @@ public class ApplicationController {
     }
 
     // Withdraw application
-    public boolean withdrawApplication(Applicant applicant) {
-        Application application = ApplicationRegistry.removeApplication(applicant.getNric());
+    public boolean reqToWithdrawApp(Applicant applicant) {
+        Application application = ApplicationRegistry.getApplicationByNRIC(applicant.getNric());
         if (application == null) {
             System.out.println("No application found to withdraw.");
             return false;
         }
         
-        System.out.println("Application withdrawn successfully.");
+        if (application.getStatus() == Application.Status.WITHDRAWN) {
+            System.out.println("Application is already withdrawn.");
+            return false;
+        }
+    
+        if (application.isWithdrawalRequested()) {
+            System.out.println("You have already requested a withdrawal.");
+            return false;
+        }
+    
+        application.setWithdrawalRequested(true);
+        System.out.println("Withdrawal request submitted. Waiting for manager approval.");
         return true;
     }
 
-    // Utility: Get application for Officer to book flat
+    //
     public Application getApplicationByNRIC(String nric) {
         return ApplicationRegistry.getApplicationByNRIC(nric);
     }
 
     public Map<String, Application> getAllApplications() {
         return ApplicationRegistry.getAllApplications();
+    }
+
+
+    // ====== HDB Manager Functions ======
+    public void approveRejectApplication(String nric, String projectName, HDBManager manager, Application.Status status) {
+        if (!manager.getAssignedProject().equalsIgnoreCase(projectName)) {
+            System.out.println("You are not assigned to this project.");
+            return;
+        }
+
+        Application application = ApplicationRegistry.getApplicationByNricAndProject(nric, projectName);
+        if (application == null) {
+            System.out.println("No application found for this NRIC in the specified project.");
+            return;
+        }
+
+        if (application.getStatus() != Application.Status.PENDING) {
+            System.out.println("Only pending applications can be processed");
+            return;
+        }
+
+        // Project project = ProjectRegistry.getProjectByName(projectName);
+        // FlatType flat = project.getFlatType(flatType);
+
+        if (status == Application.Status.SUCCESSFUL) {
+            String flatType = application.getFlatType();
+            FlatType ft = application.getProject().getFlatType(flatType);
+            if (ft == null || ft.getRemainingUnits() <= 0) {
+                System.out.println("No units left for this flat type.");
+                return;
+            }
+        }
+
+        application.setStatus(status);
+        System.out.println("Application for NRIC: " + nric + " in project: " + projectName + " has been " + status);
+    }
+
+    public List<Application> getPendingApplicationsByProject(String projectName) {
+        return ApplicationRegistry.getPendingApplicationsByProject(projectName);
+    }
+
+    public boolean approveWithdrawal(String nric) {
+        Application app = ApplicationRegistry.getApplicationByNRIC(nric);
+
+        if (app == null || !app.isWithdrawalRequested()) {
+            System.out.println("No withdrawal request found for this applicant.");
+            return false;
+        }
+
+        // If BOOKED, return the flat unit
+        if (app.getStatus() == Application.Status.BOOKED) {
+            String flatType = app.getFlatType();
+            Project project = app.getProject();
+            FlatType ft = project.getFlatTypes().get(flatType);
+
+            if (ft != null) {
+                ft.cancelBooking();
+            }
+        }
+
+        app.setStatus(Application.Status.WITHDRAWN);
+        app.setWithdrawalRequested(false); // clear the request
+        System.out.println("Application withdrawn successfully.");
+        return true;
+    }
+
+    public boolean rejectWithdrawal(String nric) {
+        Application app = ApplicationRegistry.getApplicationByNRIC(nric);
+
+        if (app == null || !app.isWithdrawalRequested()) {
+            System.out.println("No withdrawal request found for this applicant.");
+            return false;
+        }
+
+        app.setWithdrawalRequested(false); // clear the request
+        System.out.println("Withdrawal request rejected.");
+        return true;
+    }
+
+    public List<Application> getPendingWithdrawal (String projectName) {
+        return ApplicationRegistry.getWithdrawalRequestsByProject(projectName);
+    }
+
+    public List<Application> getFilteredApplications(BookingFilter filter) {
+        if (filter == null || filter.isEmpty()) {
+            return ApplicationRegistry.getAllApplications().values().stream().toList();
+        }
+
+        return ApplicationRegistry.getAllApplications().values().stream()
+            .filter(app -> filter.getStatus() == null || app.getStatus() == filter.getStatus())
+            .filter(app -> filter.getProjectName() == null || app.getProject().getName().equalsIgnoreCase(filter.getProjectName()))
+            .filter(app -> filter.getMaritalStatus() == null || app.getApplicant().getMaritalStatus().equalsIgnoreCase(filter.getMaritalStatus()))
+            .filter(app -> filter.getFlatType() == null || app.getFlatType().equalsIgnoreCase(filter.getFlatType()))
+            .filter(app -> filter.getMinAge() == null || app.getApplicant().getAge() >= filter.getMinAge())
+            .filter(app -> filter.getMaxAge() == null || app.getApplicant().getAge() <= filter.getMaxAge())
+            .toList();
+    }
+    
+    // ====== HDB Officer Functions ======
+    public void assignFlat() {
+
     }
 }

@@ -61,5 +61,18 @@ public class ApplicationRegistry {
     
         return project.getName().equalsIgnoreCase(projectName);
     }
+
+    public static List<Application> getPendingApplicationsByProject(String projectName) {
+        return applicationMap.values().stream()
+        .filter(app -> app.getProject().getName().equalsIgnoreCase(projectName))
+        .filter(app -> app.getStatus() == Application.Status.PENDING)
+        .toList();
+    }
     
+    public static List<Application> getWithdrawalRequestsByProject(String projectName) {
+        return applicationMap.values().stream()
+            .filter(app -> app.getProject().getName().equalsIgnoreCase(projectName))
+            .filter(Application::isWithdrawalRequested)
+            .toList();
+    }
 }

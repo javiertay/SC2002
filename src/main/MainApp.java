@@ -17,7 +17,7 @@ public class MainApp {
         ApplicationController applicationController = new ApplicationController();
         EnquiryController enquiryController = new EnquiryController();
         OfficerController officerController = new OfficerController();
-        ManagerController managerController = new ManagerController(applicationController, authController);
+        ManagerController managerController = new ManagerController(authController);
         
         LoginCLI loginCLI = new LoginCLI(authController, sc);
         ApplicationCLI applicationCLI = new ApplicationCLI(applicationController);
@@ -95,7 +95,7 @@ public class MainApp {
                     cli.start();
                 }
                 case "HDBManager" -> {
-                    ManagerCLI cli = new ManagerCLI((HDBManager) user, managerController, authController, enquiryController);
+                    ManagerCLI cli = new ManagerCLI((HDBManager) user, managerController, authController, enquiryController, applicationController);
                     cli.start();
                 }
                 default -> System.out.println("Unknown role.");

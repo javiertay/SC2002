@@ -8,9 +8,10 @@ public class Application {
     private String flatType; // "2-Room" or "3-Room"
     private Status status;
     private LocalDate applicationDate;
+    private Boolean withdrawalRequested = false;
 
     public enum Status {
-        PENDING, SUCCESSFUL, UNSUCCESSFUL, BOOKED
+        PENDING, SUCCESSFUL, UNSUCCESSFUL, BOOKED, WITHDRAWN
     }
 
     public Application(Applicant applicant, Project project, String flatType) {
@@ -55,6 +56,14 @@ public class Application {
 
     public boolean isBooked() {
         return this.status == Status.BOOKED;
+    }
+
+    public boolean isWithdrawalRequested() {
+        return withdrawalRequested;
+    }
+
+    public void setWithdrawalRequested(boolean requested) {
+        this.withdrawalRequested = requested;
     }
 
     @Override

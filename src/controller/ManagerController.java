@@ -6,12 +6,10 @@ import java.time.LocalDate;
 import java.util.*;
 
 public class ManagerController {
-    private final ApplicationController applicationController;
     private final AuthController authController;
 
-    public ManagerController(ApplicationController applicationController, AuthController authController) {
+    public ManagerController(AuthController authController) {
         this.authController = authController;
-        this.applicationController = applicationController;
     }
 
     // Create a new project
@@ -73,16 +71,79 @@ public class ManagerController {
         }
     }
 
+    public List<Project> getProjectsCreatedByManager(HDBManager manager) {
+        return ProjectRegistry.getAllProjects().stream()
+            .filter(p -> p.getManagerName().equalsIgnoreCase(manager.getName()))
+            .toList();
+    } 
+
     // Edit visibility
     public void toggleProjectVisibility(String projectName) {
         if (!ProjectRegistry.exists(projectName)) {
             System.out.println("Project not found.");
             return;
         }
-        ProjectRegistry.toggleVisibility(projectName);
-        System.out.println("Project visibility toggled.");
+        Project project = ProjectRegistry.getProjectByName(projectName);
+        project.setVisibility(!project.isVisible());
+        String status = project.isVisible() ? "visible" : "hidden";
+        System.out.println("Project " + projectName + " is now " + status + " to applicant.");
     }
 
+    public boolean updateNeighborhood(HDBManager manager, String newNeighborhood) {
+        Project project = getAssignedProject(manager);
+        if (project == null) return false;
+    
+        project.setNeighborhood(newNeighborhood);
+        return true;
+    }
+    
+    public boolean updateOpenDate(HDBManager manager, LocalDate openDate) {
+        Project project = getAssignedProject(manager);
+        if (project == null) return false;
+    
+        project.setOpenDate(openDate);
+        return true;
+    }
+    
+    public boolean updateCloseDate(HDBManager manager, LocalDate closeDate) {
+        Project project = getAssignedProject(manager);
+        if (project == null) return false;
+    
+        project.setCloseDate(closeDate);
+        return true;
+    }
+    
+    public boolean updateFlatUnits(HDBManager manager, String flatType, int units) {
+        Project project = getAssignedProject(manager);
+        if (project == null) return false;
+    
+        if (!project.getFlatTypes().containsKey(flatType)) return false;
+        project.getFlatTypes().get(flatType).setTotalUnits(units);
+        return true;
+    }
+    
+    public boolean updateOfficerSlots(HDBManager manager, int slots) {
+        Project project = getAssignedProject(manager);
+        if (project == null) return false;
+    
+        project.setMaxOfficerSlots(slots);
+        return true;
+    }
+    
+    public boolean toggleVisibility(HDBManager manager) {
+        Project project = getAssignedProject(manager);
+        if (project == null) return false;
+    
+        project.setVisibility(!project.isVisible());
+        return true;
+    }
+    
+    // Utility
+    private Project getAssignedProject(HDBManager manager) {
+        String name = manager.getAssignedProject();
+        return (name == null) ? null : ProjectRegistry.getProjectByName(name);
+    }
+    
     // Delete a project
     public void deleteProject(String projectName) {
         if (!ProjectRegistry.exists(projectName)) {
@@ -134,7 +195,6 @@ public class ManagerController {
     
         return true;
     }
-    
 
     /* Officer Managements: View, Approve, Reject */
     public void getAllOfficersByStatus() {
@@ -210,57 +270,6 @@ public class ManagerController {
             System.out.println("\n=== Pending Officer Applications ===");
             for (HDBOfficer officer : pendingOfficers) {
                 System.out.println("- Name: " + officer.getName() + " | NRIC: " + officer.getNric());
-            }
-        }
-    }
-
-    // Approve/reject application based on availability
-    public void approveApplication(String applicantNRIC, boolean approved) {
-        Application app = applicationController.getApplicationByNRIC(applicantNRIC);
-
-        if (app == null) {
-            System.out.println("Application not found.");
-            return;
-        }
-
-        if (approved) {
-            FlatType flat = app.getProject().getFlatType(app.getFlatType());
-            if (flat == null || flat.getRemainingUnits() <= 0) {
-                System.out.println("Not enough units to approve application.");
-                return;
-            }
-            app.setStatus(Application.Status.SUCCESSFUL);
-            flat.bookUnit();
-            System.out.println("Application approved.");
-        } else {
-            app.setStatus(Application.Status.UNSUCCESSFUL);
-            System.out.println("Application rejected.");
-        }
-    }
-
-    // Approve withdrawal
-    public void approveWithdrawal(String applicantNRIC) {
-        boolean success = applicationController.withdrawApplication(new Applicant("", applicantNRIC, "", 0, ""));
-        if (success) {
-            System.out.println("Withdrawal approved and processed.");
-        }
-    }
-
-    // Generate a simple report (you can expand filters later)
-    public void generateReport(String maritalFilter) {
-        Map<String, Application> apps = applicationController.getAllApplications();
-        System.out.println("==== BTO Report: Filter = " + maritalFilter + " ====");
-
-        for (Application app : apps.values()) {
-            if (app.getStatus() == Application.Status.BOOKED &&
-                (maritalFilter.equalsIgnoreCase("all") ||
-                 app.getApplicant().getMaritalStatus().equalsIgnoreCase(maritalFilter))) {
-
-                System.out.println("- " + app.getApplicant().getNric()
-                        + " | Age: " + app.getApplicant().getAge()
-                        + " | Status: " + app.getApplicant().getMaritalStatus()
-                        + " | Project: " + app.getProject().getName()
-                        + " | Flat: " + app.getFlatType());
             }
         }
     }

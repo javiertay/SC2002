@@ -49,12 +49,24 @@ public class Project {
         return neighborhood;
     }
 
+    public void setNeighborhood(String neighborhood) {
+        this.neighborhood = neighborhood;
+    }
+
     public LocalDate getOpenDate() {
         return openDate;
     }
 
+    public void setOpenDate(LocalDate openDate) {
+        this.openDate = openDate;
+    }
+
     public LocalDate getCloseDate() {
         return closeDate;
+    }
+
+    public void setCloseDate(LocalDate closeDate) {
+        this.closeDate = closeDate;
     }
 
     public boolean isVisible() {
@@ -67,6 +79,10 @@ public class Project {
 
     public int getMaxOfficerSlots() {
         return maxOfficerSlots;
+    }
+
+    public void setMaxOfficerSlots(int maxOfficerSlots) {
+        this.maxOfficerSlots = maxOfficerSlots;
     }
 
     public int getCurrentOfficerSlots() {
