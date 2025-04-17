@@ -91,7 +91,7 @@ public class MainApp {
                     cli.start();
                 }
                 case "HDBOfficer" -> {
-                    OfficerCLI cli = new OfficerCLI((HDBOfficer) user, officerController, enquiryController, applicationCLI);
+                    OfficerCLI cli = new OfficerCLI((HDBOfficer) user, officerController, enquiryController, applicationCLI, applicationController);
                     cli.start();
                 }
                 case "HDBManager" -> {

@@ -2,6 +2,7 @@ package view;
 
 import controller.OfficerController;
 import controller.EnquiryController;
+import controller.ApplicationController;
 import model.*;
 import model.HDBOfficer.RegistrationStatus;
 
@@ -13,10 +14,12 @@ public class OfficerCLI {
     private final HDBOfficer officer;
     private final OfficerController officerController;
     private final EnquiryController enquiryController;
+    private final ApplicationController applicationController;
     private final ApplicationCLI applicationCLI;
     private final Scanner scanner;
 
-    public OfficerCLI(HDBOfficer officer, OfficerController officerController, EnquiryController enquiryController, ApplicationCLI applicationCLI) {
+    public OfficerCLI(HDBOfficer officer, OfficerController officerController, EnquiryController enquiryController, ApplicationCLI applicationCLI, ApplicationController applicationController) {
+        this.applicationController = applicationController;
         this.applicationCLI = applicationCLI;
         this.officer = officer;
         this.officerController = officerController;
