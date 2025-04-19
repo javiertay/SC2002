@@ -41,14 +41,13 @@ public class ManagerCLI {
                     applicationManagementCLI.start();
                 }
                 case 3 -> approveOfficerRegistration();
-                // case 4 -> approveWithdrawal();
-                // case 5 -> generateReport();
                 case 4 -> manageEnquiries();
-                case 5 -> System.out.println("Logging out...");
+                case 5 -> authController.promptPasswordChange(manager, scanner);
+                case 6 -> System.out.println("Logging out...");
                 default -> System.out.println("Invalid option.");
             }
 
-        } while (choice != 5);
+        } while (choice != 6);
     }
 
     private void showMenu() {
@@ -57,7 +56,8 @@ public class ManagerCLI {
         System.out.println("2. Application Management Hub");
         System.out.println("3. Approve Officer Registration");
         System.out.println("4. View and Reply to Enquiries");
-        System.out.println("5. Logout");
+        System.out.println("5. Change Password");
+        System.out.println("6. Logout");
         System.out.print("Select an option: ");
     }
 

@@ -253,7 +253,29 @@ public class ApplicationController {
     }
     
     // ====== HDB Officer Functions ======
-    public void assignFlat() {
+    public boolean assignFlat(HDBOfficer officer, String applicantNRIC) {
+        Application application = ApplicationRegistry.getApplicationByNricAndProject(applicantNRIC, officer.getAssignedProject());
+        if (application == null || application.getStatus() != Application.Status.SUCCESSFUL) {
+            System.out.println("No successful application found for this applicant in your project.");
+            return false;
+        }
 
+        // Update application status to booked
+        application.setStatus(Application.Status.BOOKED);
+
+        // Update project flat availability
+        Project project = ProjectRegistry.getProjectByName(officer.getAssignedProject());
+        project.getFlatType(application.getFlatType()).bookUnit();
+
+        System.out.println("Flat assigned successfully.");
+        return true;
+    }
+
+    public List<Application> getSuccessfulApplicationsByProject(String projectName) {
+        return ApplicationRegistry.getSuccessfulApplicationsByProject(projectName);
+    }
+
+    public List<Application> getFlatBookedByProject(String projectName) {
+        return ApplicationRegistry.getFlatBookedByProject(projectName);
     }
 }

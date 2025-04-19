@@ -2,12 +2,14 @@ package view;
 
 import model.*;
 import controller.ApplicationController;
+import controller.OfficerController;
 
 import java.util.List;
 import java.util.Scanner;
 
 public class ApplicationManagementCLI {
     private final ApplicationController applicationController;
+    private final OfficerController officerController;
     private final HDBManager manager;
     private final HDBOfficer officer;
     private final String projectName;
@@ -18,13 +20,15 @@ public class ApplicationManagementCLI {
         this.officer = null;
         this.projectName = manager.getAssignedProject();
         this.applicationController = applicationController;
+        this.officerController = null;
     }
 
-    public ApplicationManagementCLI(HDBOfficer officer, ApplicationController applicationController) {
+    public ApplicationManagementCLI(HDBOfficer officer, ApplicationController applicationController, OfficerController officerController) {
         this.officer = officer;
         this.manager = null;
         this.projectName = officer.getAssignedProject();
         this.applicationController = applicationController;
+        this.officerController = officerController;
     }
 
     public void start() {
@@ -41,12 +45,12 @@ public class ApplicationManagementCLI {
             officerMenu();
             choice = Integer.parseInt(scanner.nextLine());
 
-            // switch (choice) {
-            //     case 1 -> 
-            //     case 2 -> 
-            //     case 3 -> System.out.println("Exiting Application Management.");
-            //     default -> System.out.println("Invalid option. Please try again.");
-            // }
+            switch (choice) {
+                case 1 -> flatSelectionWorkflow();
+                case 2 -> generateReceipt();
+                case 3 -> System.out.println("Exiting Application Management.");
+                default -> System.out.println("Invalid option. Please try again.");
+            }
         } while (choice != 3);
     }
 
@@ -56,6 +60,49 @@ public class ApplicationManagementCLI {
         System.out.println("2. Generate Booking Receipt");
         System.out.println("3. Back");
         System.out.print("Choice: ");
+    }
+
+    private void flatSelectionWorkflow() {
+        List<Application> pending = applicationController.getPendingApplicationsByProject(projectName);
+
+        if (pending.isEmpty()) {
+            System.out.println("No successful applications pending for flat booking.");
+            return;
+        }
+
+        System.out.println("\n=== Pending Applications ===");
+        for (Application app : pending) {
+            System.out.println("- NRIC: " + app.getApplicant().getNric() + ", Flat Type: " + app.getFlatType());
+        }
+
+        System.out.print("\nProcess Application? (Y/N): ");
+        String confirm = scanner.nextLine().trim().toUpperCase();
+        if (!confirm.equals("Y")) {
+            System.out.println("Returning to menu...");
+            return;
+        }
+        
+        System.out.print("Enter Applicant NRIC: ");
+        String applicantNric = scanner.nextLine().trim().toUpperCase();
+
+        officerController.assignFlatToApplicant(officer, applicantNric);
+    }
+
+    private void generateReceipt() {
+        List<Application> successful = applicationController.getFlatBookedByProject(projectName);
+
+        if (successful.isEmpty()) {
+            System.out.println("No successful applications found for flat booking.");
+            return;
+        }      
+
+        System.out.print("Enter Applicant NRIC to generate receipt: (or exit)");
+        String applicantNric = scanner.nextLine().trim().toUpperCase();
+
+        if (!applicantNric.equalsIgnoreCase("exit")) {
+            officerController.generateReceipt(officer, applicantNric);
+        }
+
     }
 
     private void managerManagement() {

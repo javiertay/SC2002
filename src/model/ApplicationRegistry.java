@@ -75,4 +75,18 @@ public class ApplicationRegistry {
             .filter(Application::isWithdrawalRequested)
             .toList();
     }
+
+    public static List<Application> getSuccessfulApplicationsByProject(String projectName) {
+        return applicationMap.values().stream()
+            .filter(app -> app.getProject().getName().equalsIgnoreCase(projectName))
+            .filter(app -> app.getStatus() == Application.Status.SUCCESSFUL)
+            .toList();
+    }
+
+    public static List<Application> getFlatBookedByProject(String projectName) {
+        return applicationMap.values().stream()
+            .filter(app -> app.getProject().getName().equalsIgnoreCase(projectName))
+            .filter(app -> app.getStatus() == Application.Status.BOOKED)
+            .toList();
+    }
 }

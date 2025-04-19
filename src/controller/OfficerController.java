@@ -3,7 +3,12 @@ package controller;
 import model.*;
 
 public class OfficerController {
-    
+    private final ApplicationController applicationController;
+
+    public OfficerController(ApplicationController applicationController) {
+        this.applicationController = applicationController;
+    }
+
     public boolean reqToHandleProject(HDBOfficer officer, String projectName) {
         // Check if officer already applied for the project
         if (officer.hasActiveRegistration(projectName)) {
@@ -39,29 +44,27 @@ public class OfficerController {
     }
 
     // Flat selection: update applicant profile and project flat availability
-    public boolean assignFlat(HDBOfficer officer, String applicantNric, String flatType) {
-        // Retrieve applicant's application
-        Application application = ApplicationRegistry.getApplicationByNricAndProject(applicantNric, officer.getAssignedProject());
-        if (application == null || application.getStatus() != Application.Status.SUCCESSFUL) {
-            System.out.println("No successful application found for this applicant in your project.");
-            return false;
+    public void assignFlatToApplicant(HDBOfficer officer, String applicantNric) {
+        if (applicationController.assignFlat(officer, applicantNric)) {
+            generateReceipt(officer, applicantNric);
         }
-
-        // Update application status to booked
-        application.setStatus(Application.Status.BOOKED);
-
-        // Update project flat availability
-        Project project = ProjectRegistry.getProjectByName(officer.getAssignedProject());
-        project.getFlatType(flatType).bookUnit();
-
-        System.out.println("Flat assigned successfully.");
-        return true;
     }
 
     // Generate flat booking receipt
-    public void generateReceipt(Application application) {
+    public void generateReceipt(HDBOfficer officer, String applicantNric) {
+        Application application = ApplicationRegistry.getApplicationByNRIC(applicantNric);
+    
+        if (application == null) {
+            System.out.println("No application found for this NRIC.");
+            return;
+        }
+
+        if (!application.getProject().getName().equalsIgnoreCase(officer.getAssignedProject())) {
+            System.out.println("This application does not belong to your assigned project.");
+            return;
+        }
+
         Applicant applicant = application.getApplicant();
-        Project project = application.getProject();
 
         System.out.println("\n===== Flat Booking Receipt =====");
         System.out.println("Applicant Name: " + applicant.getName());
@@ -69,7 +72,8 @@ public class OfficerController {
         System.out.println("Age: " + applicant.getAge());
         System.out.println("Marital Status: " + applicant.getMaritalStatus());
         System.out.println("Flat Type: " + application.getFlatType());
-        System.out.println("Project: " + project.getName() + " (" + project.getNeighborhood() + ")");
+        System.out.println("Project: " + application.getProject().getName() + " (" + application.getProject().getNeighborhood() + ")");
+        System.out.println("Flat Type: " + application.getFlatType() + " has been successfully booked.");
         System.out.println("================================\n");
     }
 }

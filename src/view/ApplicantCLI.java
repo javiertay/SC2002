@@ -6,7 +6,6 @@ import model.Applicant;
 import java.util.Scanner;
 
 public class ApplicantCLI {
-
     private final Applicant applicant;
     private final EnquiryController enquiryController;
     private final AuthController authController;
@@ -30,7 +29,7 @@ public class ApplicantCLI {
             switch (choice) {
                 case 1 -> applicationCLI.start(applicant);
                 case 2 -> manageEnquiries();
-                case 3 -> changePassword();
+                case 3 -> authController.promptPasswordChange(applicant, scanner);
                 case 4 -> System.out.println("Logging out...");
                 default -> System.out.println("Invalid option.");
             }
@@ -40,7 +39,7 @@ public class ApplicantCLI {
 
     private void showMenu() {
         System.out.println("\n=== Applicant Menu ===");
-        System.out.println("1. HDB Application Manager");
+        System.out.println("1. Manage HDB Applications");
         System.out.println("2. Manage Enquiries");
         System.out.println("3. Change Password");
         System.out.println("4. Logout");
@@ -51,33 +50,4 @@ public class ApplicantCLI {
         EnquiryCLI enquiryCLI = new EnquiryCLI(applicant, enquiryController);
         enquiryCLI.start();
     }
-
-    private void changePassword() {
-        System.out.print("Enter current password: ");
-        String currentPassword = scanner.nextLine();
-    
-        if (!applicant.getPassword().equals(currentPassword)) {
-            System.out.println("Incorrect current password.");
-            return;
-        }
-    
-        System.out.print("Enter new password: ");
-        String newPassword = scanner.nextLine();
-    
-        System.out.print("Confirm new password: ");
-        String confirmPassword = scanner.nextLine();
-    
-        if (!newPassword.equals(confirmPassword)) {
-            System.out.println("Passwords do not match.");
-            return;
-        }
-    
-        boolean success = authController.changePassword(applicant, newPassword);
-        if (success) {
-            System.out.println("Password successfully changed.");
-        } else {
-            System.out.println("Password change failed.");
-        }
-    }
-    
 }
