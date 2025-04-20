@@ -2,7 +2,10 @@ package model;
 
 import java.time.LocalDate;
 
-public class Application {
+import util.Searchable;
+import util.Filter;
+
+public class Application implements Searchable{
     private Applicant applicant;
     private Project project;
     private String flatType; // "2-Room" or "3-Room"
@@ -74,5 +77,40 @@ public class Application {
                 ", FlatType=" + flatType +
                 ", Status=" + status +
                 ']';
+    }
+
+    @Override
+    public boolean matches(Filter filter) {
+        if (filter.getFlatType() != null &&
+            !this.getFlatType().equalsIgnoreCase(filter.getFlatType())) {
+            return false;
+        }
+
+        if (filter.getProjectName() != null &&
+            !this.getProject().getName().equalsIgnoreCase(filter.getProjectName())) {
+            return false;
+        }
+
+        if (filter.getStatus() != null &&
+            this.getStatus() != filter.getStatus()) {
+            return false;
+        }
+
+        if (filter.getMaritalStatus() != null &&
+            !this.getApplicant().getMaritalStatus().equalsIgnoreCase(filter.getMaritalStatus())) {
+            return false;
+        }
+
+        if (filter.getMinAge() != null &&
+            this.getApplicant().getAge() < filter.getMinAge()) {
+            return false;
+        }
+
+        if (filter.getMaxAge() != null &&
+            this.getApplicant().getAge() > filter.getMaxAge()) {
+            return false;
+        }
+
+        return true;
     }
 }

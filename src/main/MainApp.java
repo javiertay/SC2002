@@ -3,13 +3,16 @@ package main;
 import controller.*;
 
 import java.time.LocalDate;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Scanner;
 import model.*;
-import util.ExcelReader;
+import util.*;
 import view.*;
 
 public class MainApp {
     public static void main(String[] args) {
+        Map<String, Filter> userfilters = new HashMap<>();
         Scanner sc = new Scanner(System.in);
         
         // ===== Initialize Controllers =====
@@ -20,7 +23,6 @@ public class MainApp {
         ManagerController managerController = new ManagerController(authController);
         
         LoginCLI loginCLI = new LoginCLI(authController, sc);
-        ApplicationCLI applicationCLI = new ApplicationCLI(applicationController);
 
         // ===== Load All Data =====
         if (!loadData(authController, "src/data/CombinedExcel.xlsx")) {
@@ -33,19 +35,23 @@ public class MainApp {
             loginCLI.welcomeScreen();
             User user = loginCLI.promptLogin();
             if (user == null) break;
+            String nric = user.getNric();
 
             // ===== Route to CLI Based on Role =====
             switch (user.getRole()) {
                 case "Applicant" -> {
+                    ApplicationCLI applicationCLI = new ApplicationCLI(applicationController, nric, userfilters);
                     ApplicantCLI cli = new ApplicantCLI((Applicant) user, enquiryController, authController, applicationCLI);
                     cli.start();
                 }
                 case "HDBOfficer" -> {
+                    ApplicationCLI applicationCLI = new ApplicationCLI(applicationController, nric, userfilters);
                     OfficerCLI cli = new OfficerCLI((HDBOfficer) user, officerController, authController, enquiryController, applicationCLI, applicationController);
                     cli.start();
                 }
                 case "HDBManager" -> {
-                    ManagerCLI cli = new ManagerCLI((HDBManager) user, managerController, authController, enquiryController, applicationController);
+                    ApplicationManagementCLI applicationManagementCLI = new ApplicationManagementCLI((HDBManager) user, applicationController, userfilters);
+                    ManagerCLI cli = new ManagerCLI((HDBManager) user, managerController, authController, enquiryController, applicationManagementCLI);
                     cli.start();
                 }
                 default -> System.out.println("Unknown role.");

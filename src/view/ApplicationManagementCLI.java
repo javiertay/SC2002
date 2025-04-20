@@ -1,13 +1,16 @@
 package view;
 
 import model.*;
+import util.Filter;
 import controller.ApplicationController;
 import controller.OfficerController;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 
 public class ApplicationManagementCLI {
+    private final Filter filter;
     private final ApplicationController applicationController;
     private final OfficerController officerController;
     private final HDBManager manager;
@@ -15,12 +18,13 @@ public class ApplicationManagementCLI {
     private final String projectName;
     private final Scanner scanner = new Scanner(System.in);
 
-    public ApplicationManagementCLI(HDBManager manager, ApplicationController applicationController) {
+    public ApplicationManagementCLI(HDBManager manager, ApplicationController applicationController, Map<String, Filter> userFilters) {
         this.manager = manager;
         this.officer = null;
         this.projectName = manager.getAssignedProject();
         this.applicationController = applicationController;
         this.officerController = null;
+        this.filter = userFilters.computeIfAbsent(manager.getNric(), k -> new Filter());
     }
 
     public ApplicationManagementCLI(HDBOfficer officer, ApplicationController applicationController, OfficerController officerController) {
@@ -29,6 +33,7 @@ public class ApplicationManagementCLI {
         this.projectName = officer.getAssignedProject();
         this.applicationController = applicationController;
         this.officerController = officerController;
+        this.filter = null;
     }
 
     public void start() {
@@ -194,8 +199,7 @@ public class ApplicationManagementCLI {
     }
 
     private void generateReport() {
-        BookingFilter filter = collectFilterInput();
-
+        collectApplicationFilterInput(); 
         List<Application> result = applicationController.getFilteredApplications(filter);
 
         if (result.isEmpty()) {
@@ -206,57 +210,53 @@ public class ApplicationManagementCLI {
         printReport(result);
     }
 
-    private BookingFilter collectFilterInput() {
-        BookingFilter filter = new BookingFilter();
-        boolean addingFilters = true;
-    
-        while (addingFilters) {
-            System.out.println("\n=== Filter By: ===");
-            System.out.println("1. Marital Status");
-            System.out.println("2. Flat Type");
-            System.out.println("3. Age Range");
-            System.out.println("4. Project Name");
-            System.out.println("5. Application Status");
-            System.out.println("6. Done");
-            System.out.print("Choice: ");
-    
-            int choice = Integer.parseInt(scanner.nextLine());
-    
-            switch (choice) {
-                case 1 -> {
-                    System.out.print("Enter marital status (e.g., Married, Single): ");
-                    filter.setMaritalStatus(scanner.nextLine().trim());
-                }
-                case 2 -> {
-                    System.out.print("Enter flat type (e.g., 2-Room, 3-Room): ");
-                    filter.setFlatType(scanner.nextLine().trim());
-                }
-                case 3 -> {
-                    System.out.print("Enter minimum age: ");
-                    filter.setMinAge(Integer.parseInt(scanner.nextLine()));
-                    System.out.print("Enter maximum age: ");
-                    filter.setMaxAge(Integer.parseInt(scanner.nextLine()));
-                }
-                case 4 -> {
-                    System.out.print("Enter project name: ");
-                    filter.setProjectName(scanner.nextLine().trim());
-                }
-                case 5 -> {
-                    System.out.println("Available statuses: PENDING, SUCCESSFUL, BOOKED, UNSUCCESSFUL, WITHDRAWN");
-                    System.out.print("Enter status: ");
-                    String statusInput = scanner.nextLine().trim().toUpperCase();
-                    try {
-                        filter.setStatus(Application.Status.valueOf(statusInput));
-                    } catch (IllegalArgumentException e) {
-                        System.out.println("Invalid status entered.");
-                    }
-                }
-                case 6 -> addingFilters = false;
-                default -> System.out.println("Invalid choice. Please try again.");
+    private void collectApplicationFilterInput() {
+        System.out.println("\n=== Filter Aplications by: ===");
+        System.out.println("Leave any field blank to skip.");
+
+        System.out.print("Filter by Marital Status (e.g., Married, Single): ");
+        String maritalStatus = scanner.nextLine().trim();
+        filter.setMaritalStatus(maritalStatus.isEmpty() ? null : maritalStatus);
+
+        System.out.print("Filter by Flat Type (e.g., 2-Room, 3-Room): ");
+        String flatType = scanner.nextLine().trim();
+        filter.setFlatType(flatType.isEmpty() ? null : flatType);
+
+        System.out.print("Filter by Project Name: ");
+        String projectName = scanner.nextLine().trim();
+        filter.setProjectName(projectName.isEmpty() ? null : projectName);
+
+        System.out.print("Filter by Minimum Age: ");
+        String minAgeStr = scanner.nextLine().trim();
+        if (!minAgeStr.isEmpty()) {
+            try {
+                filter.setMinAge(Integer.parseInt(minAgeStr));
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid number for minimum age. Skipping.");
             }
         }
-    
-        return filter;
+
+        System.out.print("Filter by Maximum Age: ");
+        String maxAgeStr = scanner.nextLine().trim();
+        if (!maxAgeStr.isEmpty()) {
+            try {
+                filter.setMaxAge(Integer.parseInt(maxAgeStr));
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid number for maximum age. Skipping.");
+            }
+        }
+
+        System.out.println("Statuses: PENDING, SUCCESSFUL, BOOKED, UNSUCCESSFUL, WITHDRAWN");
+        System.out.print("Filter by Application Status: ");
+        String statusInput = scanner.nextLine().trim().toUpperCase();
+        try {
+            filter.setStatus(statusInput.isEmpty() ? null : Application.Status.valueOf(statusInput));
+        } catch (IllegalArgumentException e) {
+            System.out.println("Invalid status entered. Skipping.");
+            filter.setStatus(null);
+        }
+
+        System.out.println("Application filters updated.");
     }
 
     private void printReport(List<Application> result) {

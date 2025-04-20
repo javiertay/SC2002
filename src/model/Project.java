@@ -3,7 +3,9 @@ package model;
 import java.time.LocalDate;
 import java.util.*;
 
-public class Project {
+import util.Filter;
+import util.Searchable;
+public class Project implements Searchable{
     private String name;
     private String neighborhood;
     private Map<String, FlatType> flatTypes;  // "2-Room", "3-Room"
@@ -112,4 +114,18 @@ public class Project {
         }
     }
     
+    @Override
+    public boolean matches(Filter filter) {
+        if (filter.getNeighbourhood() != null &&
+            !this.getNeighborhood().equalsIgnoreCase(filter.getNeighbourhood())) {
+            return false;
+        }
+
+        if (filter.getFlatType() != null &&
+            !this.getFlatTypes().containsKey(filter.getFlatType())) {
+            return false;
+        }
+
+        return true;
+    }
 }

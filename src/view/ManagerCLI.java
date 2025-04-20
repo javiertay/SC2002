@@ -1,6 +1,5 @@
 package view;
 
-import controller.ApplicationController;
 import controller.AuthController;
 import controller.EnquiryController;
 import controller.ManagerController;
@@ -13,15 +12,15 @@ public class ManagerCLI {
     private final ManagerController managerController;
     private final AuthController authController;
     private final EnquiryController enquiryController;
-    private final ApplicationController applicationController;
+    private final ApplicationManagementCLI applicationManagementCLI;
     private final Scanner scanner;
 
-    public ManagerCLI(HDBManager manager, ManagerController managerController, AuthController authController, EnquiryController enquiryController, ApplicationController applicationController) {
-        this.applicationController = applicationController;
+    public ManagerCLI(HDBManager manager, ManagerController managerController, AuthController authController, EnquiryController enquiryController, ApplicationManagementCLI applicationManagementCLI) {
         this.manager = manager;
         this.managerController = managerController;
         this.authController = authController;
         this.enquiryController = enquiryController;
+        this.applicationManagementCLI = applicationManagementCLI;
         this.scanner = new Scanner(System.in);
     }
 
@@ -37,7 +36,7 @@ public class ManagerCLI {
                     projectManagementCLI.start();
                 }
                 case 2 -> {
-                    ApplicationManagementCLI applicationManagementCLI = new ApplicationManagementCLI(manager, applicationController);
+                    // ApplicationManagementCLI applicationManagementCLI = new ApplicationManagementCLI(manager, applicationController);
                     applicationManagementCLI.start();
                 }
                 case 3 -> approveOfficerRegistration();

@@ -1,16 +1,20 @@
 package view;
 
+import java.util.Map;
 import java.util.Scanner;
 
 import controller.ApplicationController;
 import model.*;
+import util.Filter;
 
 public class ApplicationCLI {
     private final ApplicationController applicationController;
+    private final Filter filter;
     private final Scanner scanner;
 
-    public ApplicationCLI(ApplicationController applicationController) {
+    public ApplicationCLI(ApplicationController applicationController, String nric, Map<String, Filter> userFilters) {
         this.applicationController = applicationController;
+        this.filter = userFilters.computeIfAbsent(nric, k -> new Filter());
         this.scanner = new Scanner(System.in);
     }    
 
@@ -25,14 +29,16 @@ public class ApplicationCLI {
                 case 2 -> submitApplication(applicant);
                 case 3 -> viewApplicationStatus(applicant);
                 case 4 -> withdrawApplication(applicant);
-                case 5 -> {
+                case 5 -> setProjectFilter();
+                case 6 -> clearProjectFilter();
+                case 7 -> {
                     System.out.println("Exiting Application Management.");
                     System.out.println();
-                    }
+                }
                 default -> System.out.println("Invalid option. Please try again.");
             }
 
-        } while (choice != 5);
+        } while (choice != 7);
     }
 
     private void showMenu() {
@@ -41,12 +47,14 @@ public class ApplicationCLI {
         System.out.println("2. Apply for a Project");
         System.out.println("3. View Application Status");
         System.out.println("4. Withdraw Application");
-        System.out.println("5. Back");
-        System.out.print("Select an option: ");  
+        System.out.println("5. Set Project Filter");
+        System.out.println("6. Clear Project Filter");
+        System.out.println("7. Back");
+        System.out.print("Select an option: ");
     }
 
     private void viewAllAvailableProject(Applicant applicant){
-        applicationController.getAllAvailableProjects(applicant);
+        applicationController.getAllAvailableProjects(applicant, filter);
     }
 
     private void submitApplication(Applicant applicant) {
@@ -94,4 +102,24 @@ public class ApplicationCLI {
             System.out.println("Withdrawal cancelled.");
         }
     }
+
+    private void setProjectFilter() {
+        System.out.println("\n== Set Project Filters ==");
+    
+        System.out.print("Filter by Neighborhood (leave blank to skip): ");
+        String location = scanner.nextLine().trim();
+        filter.setNeighbourhood(location.isEmpty() ? null : location);
+    
+        System.out.print("Filter by Flat Type (e.g., 2-Room/3-Room, leave blank to skip): ");
+        String flatType = scanner.nextLine().trim();
+        filter.setFlatType(flatType.isEmpty() ? null : flatType);
+        
+        System.out.println("Filter set.");
+    }
+    
+    private void clearProjectFilter() {
+        filter.clear();
+        System.out.println("Project filter cleared.");
+    }
+    
 }
