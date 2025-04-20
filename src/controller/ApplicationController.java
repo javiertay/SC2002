@@ -289,14 +289,17 @@ public class ApplicationController {
     }
 
     public List<Application> getFilteredApplications(Filter filter) {
-        return ApplicationRegistry.getAllApplications().values().stream()
-            .filter(app -> filter.getProjectName() == null || app.getProject().getName().equalsIgnoreCase(filter.getProjectName()))
-            .filter(app -> filter.getFlatType() == null || app.getFlatType().equalsIgnoreCase(filter.getFlatType()))
-            .filter(app -> filter.getMaritalStatus() == null || app.getApplicant().getMaritalStatus().equalsIgnoreCase(filter.getMaritalStatus()))
-            .filter(app -> filter.getMinAge() == null || app.getApplicant().getAge() >= filter.getMinAge())
-            .filter(app -> filter.getMaxAge() == null || app.getApplicant().getAge() <= filter.getMaxAge())
-            .filter(app -> filter.getStatus() == null || app.getStatus() == filter.getStatus())
-            .toList();
+        return FilterUtil.applyFilter(ApplicationRegistry.getAllApplications().values(), filter);
+
+        // return ApplicationRegistry.getAllApplications().values().stream()
+        //     .filter(app -> filter.getProjectName() == null || app.getProject().getName().equalsIgnoreCase(filter.getProjectName()))
+        //     .filter(app -> filter.getFlatType() == null || app.getFlatType().equalsIgnoreCase(filter.getFlatType()))
+        //     .filter(app -> filter.getMaritalStatus() == null || app.getApplicant().getMaritalStatus().equalsIgnoreCase(filter.getMaritalStatus()))
+        //     .filter(app -> filter.getMinAge() == null || app.getApplicant().getAge() >= filter.getMinAge())
+        //     .filter(app -> filter.getMaxAge() == null || app.getApplicant().getAge() <= filter.getMaxAge())
+        //     .filter(app -> filter.getStatus() == null || app.getStatus() == filter.getStatus())
+        //     .toList();
+
     }
     
     // ====== HDB Officer Functions ======

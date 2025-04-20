@@ -1,12 +1,14 @@
 package util;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class FilterUtil {
-    public static <T extends Searchable> List<T> applyFilter(List<T> items, Filter filter) {
+    public static <T extends Searchable> List<T> applyFilter(Collection<T> items, Filter filter) {
         if (filter == null || filter.isEmpty()) {
-            return items; // no filter applied
+            return new ArrayList<>(items); // no filter applied
         }
 
         return items.stream()
