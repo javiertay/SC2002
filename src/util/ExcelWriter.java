@@ -422,4 +422,10 @@ public class ExcelWriter {
         }
     }
     
+    public static void saveData() {
+        exportApplications();
+        exportProjects();
+        exportEnquiries();
+        System.out.println("Data successfully saved to Excel.");
+    }
 }

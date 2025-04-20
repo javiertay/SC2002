@@ -12,6 +12,11 @@ import view.*;
 
 public class MainApp {
     public static void main(String[] args) {
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            System.out.println("\n\nSaving data before exit...");
+            ExcelWriter.saveData();
+        }));
+
         Map<String, Filter> userfilters = new HashMap<>();
         Scanner sc = new Scanner(System.in);
         
@@ -59,6 +64,7 @@ public class MainApp {
         }
 
         System.out.println("Thank you for using the system!");
+        ExcelWriter.saveData();
         sc.close();
     }
 
