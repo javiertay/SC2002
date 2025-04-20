@@ -136,7 +136,7 @@ public class ExcelReader {
     // Load Projects
     public static List<Project> loadProjects(Sheet sheet) {
         if (sheet == null) {
-            System.out.println("Sheet not found in Excel. Skipping.");
+            System.out.println("ProjectListing sheet not found in Excel. Skipping.");
             return Collections.emptyList();
         }
 
@@ -190,7 +190,7 @@ public class ExcelReader {
     // load applications
     public static List<Application> loadApplications(Sheet sheet, AuthController authController) {
         if (sheet == null) {
-            System.out.println("Sheet not found in Excel. Skipping.");
+            System.out.println("Application sheet not found in Excel. Skipping.");
             return Collections.emptyList();
         }
 
@@ -232,7 +232,7 @@ public class ExcelReader {
     
     public static List<Enquiry> loadEnquiries(Sheet sheet) {
         if (sheet == null) {
-            System.out.println("Sheet not found in Excel. Skipping.");
+            System.out.println("Enquiries sheet not found in Excel. Skipping.");
             return Collections.emptyList();
         }
 

@@ -212,21 +212,20 @@ public class ApplicationManagementCLI {
 
     private void collectApplicationFilterInput() {
         System.out.println("\n=== Filter Aplications by: ===");
-        System.out.println("Leave any field blank to skip.");
 
-        System.out.print("Filter by Marital Status (e.g., Married, Single): ");
+        System.out.print("Filter by Marital Status (e.g., Married, Single leave blank to skip): ");
         String maritalStatus = scanner.nextLine().trim();
         filter.setMaritalStatus(maritalStatus.isEmpty() ? null : maritalStatus);
 
-        System.out.print("Filter by Flat Type (e.g., 2-Room, 3-Room): ");
+        System.out.print("Filter by Flat Type (e.g., 2-Room, 3-Room leave blank to skip): ");
         String flatType = scanner.nextLine().trim();
         filter.setFlatType(flatType.isEmpty() ? null : flatType);
 
-        System.out.print("Filter by Project Name: ");
+        System.out.print("Filter by Project Name (leave blank to skip): ");
         String projectName = scanner.nextLine().trim();
         filter.setProjectName(projectName.isEmpty() ? null : projectName);
 
-        System.out.print("Filter by Minimum Age: ");
+        System.out.print("Filter by Minimum Age (leave blank to skip): ");
         String minAgeStr = scanner.nextLine().trim();
         if (!minAgeStr.isEmpty()) {
             try {
@@ -236,7 +235,7 @@ public class ApplicationManagementCLI {
             }
         }
 
-        System.out.print("Filter by Maximum Age: ");
+        System.out.print("Filter by Maximum Age (leave blank to skip): ");
         String maxAgeStr = scanner.nextLine().trim();
         if (!maxAgeStr.isEmpty()) {
             try {
@@ -247,7 +246,7 @@ public class ApplicationManagementCLI {
         }
 
         System.out.println("Statuses: PENDING, SUCCESSFUL, BOOKED, UNSUCCESSFUL, WITHDRAWN");
-        System.out.print("Filter by Application Status: ");
+        System.out.print("Filter by Application Status (leave blank to skip): ");
         String statusInput = scanner.nextLine().trim().toUpperCase();
         try {
             filter.setStatus(statusInput.isEmpty() ? null : Application.Status.valueOf(statusInput));

@@ -64,7 +64,6 @@ public class MainApp {
         }
 
         System.out.println("Thank you for using the system!");
-        ExcelWriter.saveData();
         sc.close();
     }
 

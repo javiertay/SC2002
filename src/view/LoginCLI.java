@@ -1,6 +1,8 @@
 package view;
 
 import controller.AuthController;
+
+import java.io.Console;
 import java.util.Scanner;
 import model.User;
 
@@ -34,8 +36,15 @@ public class LoginCLI {
         final int maxAttempts = 3;
     
         while (attempts < maxAttempts) {
-            System.out.print("Enter Password: ");
-            String password = scanner.nextLine();
+            String password;
+            Console console = System.console();
+            if (console == null) {
+                System.out.print("Enter Password: ");
+                password = scanner.nextLine();
+            } else {
+                char[] passwordChars = console.readPassword("Enter Password: ");
+                password = new String(passwordChars);
+            }
     
             User authenticatedUser = authController.login(nric, password);
             if (authenticatedUser != null) {
