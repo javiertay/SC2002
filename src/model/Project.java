@@ -31,8 +31,8 @@ public class Project implements Searchable{
     }
 
     // Add flat type info (e.g., during creation)
-    public void addFlatType(String type, int totalUnits) {
-        flatTypes.put(type, new FlatType(type, totalUnits));
+    public void addFlatType(String type, int totalUnits, int price) {
+        flatTypes.put(type, new FlatType(type, totalUnits, price));
     }
 
     public FlatType getFlatType(String type) {
@@ -125,6 +125,20 @@ public class Project implements Searchable{
             !this.getFlatTypes().containsKey(filter.getFlatType())) {
             return false;
         }
+
+        // if (filter.getMinPrice() != null) {
+        //     FlatType flatType = this.getFlatTypes().get(filter.getFlatType());
+        //     if (flatType == null || flatType.getPrice() < filter.getMinPrice()) {
+        //         return false;
+        //     }
+        // }
+
+        // if (filter.getMaxPrice() != null) {
+        //     FlatType flatType = this.getFlatTypes().get(filter.getFlatType());
+        //     if (flatType == null || flatType.getPrice() > filter.getMaxPrice()) {
+        //         return false;
+        //     }
+        // }
 
         return true;
     }

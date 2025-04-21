@@ -66,55 +66,24 @@ public class ApplicationController {
         if (!isEligible) {
             System.out.println("You are not eligible for any projects.");
         }
-
-        // List<Project> allProjects = ProjectRegistry.filterByVisibility(true);
-
-        // // Filter the list using shared filtering logic
-        // List<Project> filtered = FilterUtil.applyFilter(allProjects, filter);
-
-        // if (filtered.isEmpty()) {
-        //     System.out.println("No matching projects found.");
-        //     return;
-        // }
-
-        // System.out.println("\nAvailable Projects for You:");
-        // boolean isEligible = false;
-
-        // for (Project project : filtered) {
-        //     boolean show2Room = false;
-        //     boolean show3Room = false;
-
-        //     if (applicant.getMaritalStatus().equalsIgnoreCase("single") && applicant.getAge() >= 35) {
-        //         show2Room = project.getFlatTypes().containsKey("2-Room") &&
-        //                     project.getFlatTypes().get("2-Room").getRemainingUnits() > 0;
-        //     } else if (applicant.getMaritalStatus().equalsIgnoreCase("married") && applicant.getAge() >= 21) {
-        //         show2Room = project.getFlatTypes().containsKey("2-Room");
-        //         show3Room = project.getFlatTypes().containsKey("3-Room");
-        //     }
-
-        //     if (!show2Room && !show3Room) continue;
-        //     isEligible = true;
-
-        //     System.out.println("  Project Name: " + project.getName());
-        //     System.out.println("  Neighborhood: " + project.getNeighborhood());
-        //     System.out.println("  Flat Types:");
-        //     for (FlatType ft : project.getFlatTypes().values()) {
-        //         String type = ft.getType();
-        //         if ((type.equalsIgnoreCase("2-Room") && show2Room) ||
-        //             (type.equalsIgnoreCase("3-Room") && show3Room)) {
-        //             System.out.println("    - " + type + ": " + ft.getRemainingUnits() + " units left");
-        //         }
-        //     }
-        //     System.out.println("  Project Open Date: " + project.getOpenDate());
-        //     System.out.println("  Project Close Date: " + project.getCloseDate());
-        //     System.out.println("----------------------------------");
-        // }
-
-        // if (!isEligible) {
-        //     System.out.println("You are not eligible for any projects.");
-        // }
     }
 
+    public List<Project> fetchAvailableProjects(Applicant applicant) {
+        List<Project> projects = ProjectRegistry.filterByVisibility(true).stream()
+            .filter(project -> !LocalDate.now().isAfter(project.getCloseDate()))
+            .toList();
+
+        if (applicant.getMaritalStatus().equalsIgnoreCase("single")) {
+            projects = projects.stream().filter(project -> {
+                FlatType twoRoom = project.getFlatTypes().get("2-Room");
+                return twoRoom != null && twoRoom.getRemainingUnits() > 0;
+            }).toList();
+        }
+
+        return projects;
+        
+    }
+    
     // Submit application
     public boolean submitApplication(Applicant applicant, String projectName, String flatType) {
         if (ApplicationRegistry.hasApplication(applicant.getNric())) {
@@ -290,16 +259,6 @@ public class ApplicationController {
 
     public List<Application> getFilteredApplications(Filter filter) {
         return FilterUtil.applyFilter(ApplicationRegistry.getAllApplications().values(), filter);
-
-        // return ApplicationRegistry.getAllApplications().values().stream()
-        //     .filter(app -> filter.getProjectName() == null || app.getProject().getName().equalsIgnoreCase(filter.getProjectName()))
-        //     .filter(app -> filter.getFlatType() == null || app.getFlatType().equalsIgnoreCase(filter.getFlatType()))
-        //     .filter(app -> filter.getMaritalStatus() == null || app.getApplicant().getMaritalStatus().equalsIgnoreCase(filter.getMaritalStatus()))
-        //     .filter(app -> filter.getMinAge() == null || app.getApplicant().getAge() >= filter.getMinAge())
-        //     .filter(app -> filter.getMaxAge() == null || app.getApplicant().getAge() <= filter.getMaxAge())
-        //     .filter(app -> filter.getStatus() == null || app.getStatus() == filter.getStatus())
-        //     .toList();
-
     }
     
     // ====== HDB Officer Functions ======

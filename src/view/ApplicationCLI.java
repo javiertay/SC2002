@@ -1,5 +1,6 @@
 package view;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 
@@ -58,6 +59,13 @@ public class ApplicationCLI {
     }
 
     private void submitApplication(Applicant applicant) {
+        List<Project> availableProjects = applicationController.fetchAvailableProjects(applicant);
+
+        if (availableProjects.isEmpty()) {
+            System.out.println("No available projects for you to apply.");
+            return;            
+        }
+
         System.out.print("\nEnter Project Name: ");
         String projectName = scanner.nextLine().trim();
         

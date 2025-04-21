@@ -6,6 +6,8 @@ public class Filter {
     // Filters for projects listing
     private String flatType;
     private String neighbourhood;
+    private Integer minPrice;
+    private Integer maxPrice;
 
     // Additional filters for applications listing
     private String projectName;
@@ -70,8 +72,24 @@ public class Filter {
         this.maxAge = maxAge;
     }
 
+    public Integer getMinPrice() {
+        return minPrice;
+    }
+
+    public void setMinPrice(Integer minPrice) {
+        this.minPrice = minPrice;
+    }
+
+    public Integer getMaxPrice() {
+        return maxPrice;
+    }
+
+    public void setMaxPrice(Integer maxPrice) {
+        this.maxPrice = maxPrice;
+    }
+
     public boolean isEmpty() {
-        return flatType == null && neighbourhood == null && projectName == null && maritalStatus == null && minAge == null && maxAge == null && status == null;
+        return flatType == null && neighbourhood == null && projectName == null && maritalStatus == null && minAge == null && maxAge == null && status == null && minPrice == null && maxPrice == null;
     }
 
     public void clear() {
@@ -82,5 +100,7 @@ public class Filter {
         minAge = null;
         maxAge = null;
         status = null;
+        minPrice = null;
+        maxPrice = null;
     }
 }

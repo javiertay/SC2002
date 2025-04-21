@@ -36,7 +36,6 @@ public class ManagerCLI {
                     projectManagementCLI.start();
                 }
                 case 2 -> {
-                    // ApplicationManagementCLI applicationManagementCLI = new ApplicationManagementCLI(manager, applicationController);
                     applicationManagementCLI.start();
                 }
                 case 3 -> approveOfficerRegistration();

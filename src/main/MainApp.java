@@ -13,7 +13,6 @@ import view.*;
 public class MainApp {
     public static void main(String[] args) {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            System.out.println("\n\nSaving data before exit...");
             ExcelWriter.saveData();
         }));
 
@@ -117,6 +116,48 @@ public class MainApp {
 
             if (selectedProject != null) {
                 manager.assignToProject(selectedProject.getName());
+            }
+        }
+
+        for (Project project : data.projects) {
+            LocalDate today = LocalDate.now();
+
+            if (project.getCloseDate().isBefore(today)) {
+                project.setVisibility(false); // Auto hide projects that are closed
+            }
+
+            for (HDBOfficer officer : data.officers) {
+                if (project.getOfficerList().contains(officer.getName())) {
+                    officer.assignToProject(project.getName());
+                    officer.setRegistrationStatus(project.getName(), HDBOfficer.RegistrationStatus.APPROVED);
+                }
+            }
+
+            for (HDBManager manager : data.managers) {
+                Project selectedProject = null;
+                LocalDate earliestFutureDate = LocalDate.MAX;
+
+                if (!project.getManagerName().equalsIgnoreCase(manager.getName())) continue; // Only consider projects assigned to this manager
+
+                LocalDate openDate = project.getOpenDate();
+                LocalDate closeDate = project.getCloseDate();
+
+                // Check if the project is currently open
+                if ((openDate.isBefore(today) || openDate.isEqual(today))
+                        && (closeDate.isAfter(today) || closeDate.isEqual(today))) {
+                    selectedProject = project;
+                    break;
+                }
+
+                // If no current project, find the earliest future project
+                if (openDate.isAfter(today) && openDate.isBefore(earliestFutureDate)) {
+                    selectedProject = project;
+                    earliestFutureDate = openDate;
+                }
+
+                if (selectedProject != null) {
+                    manager.assignToProject(selectedProject.getName());
+                }
             }
         }
 

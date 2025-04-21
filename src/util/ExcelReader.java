@@ -76,7 +76,7 @@ public class ExcelReader {
 
             String name = row.getCell(0).getStringCellValue();
             String nric = row.getCell(1).getStringCellValue();
-            int age = (int) row.getCell(2).getNumericCellValue();
+            int age = getSafeNumericCellValue((row.getCell(2)));
             String maritalStatus = row.getCell(3).getStringCellValue();
             String password = row.getCell(4).getStringCellValue();
 
@@ -99,7 +99,7 @@ public class ExcelReader {
 
             String name = row.getCell(0).getStringCellValue();
             String nric = row.getCell(1).getStringCellValue();
-            int age = (int) row.getCell(2).getNumericCellValue();
+            int age = getSafeNumericCellValue((row.getCell(2)));
             String maritalStatus = row.getCell(3).getStringCellValue();
             String password = row.getCell(4).getStringCellValue();
 
@@ -123,7 +123,7 @@ public class ExcelReader {
 
             String name = row.getCell(0).getStringCellValue();
             String nric = row.getCell(1).getStringCellValue();
-            int age = (int) row.getCell(2).getNumericCellValue();
+            int age = getSafeNumericCellValue((row.getCell(2)));
             String maritalStatus = row.getCell(3).getStringCellValue();
             String password = row.getCell(4).getStringCellValue();
 
@@ -150,19 +150,19 @@ public class ExcelReader {
 
             // 2-Room
             String type1 = row.getCell(2).getStringCellValue();
-            int units1 = (int) row.getCell(3).getNumericCellValue();
-            // double price1 = row.getCell(4).getNumericCellValue();
+            int units1 = getSafeNumericCellValue(row.getCell(3));
+            int price1 = getSafeNumericCellValue((row.getCell(4)));
 
             // 3-Room
             String type2 = row.getCell(5).getStringCellValue();
-            int units2 = (int) row.getCell(6).getNumericCellValue();
-            // double price2 = row.getCell(7).getNumericCellValue();
+            int units2 = getSafeNumericCellValue((row.getCell(6)));
+            int price2 = getSafeNumericCellValue((row.getCell(7)));
 
             LocalDate openDate = row.getCell(8).getDateCellValue().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
             LocalDate closeDate = row.getCell(9).getDateCellValue().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
 
             String managerName = row.getCell(10).getStringCellValue();
-            int officerSlots = (int) row.getCell(11).getNumericCellValue();
+            int officerSlots = getSafeNumericCellValue((row.getCell(11)));
 
             String officerNames = (row.getCell(12) != null) ? row.getCell(12).getStringCellValue().trim() : "";
             String[] officerName = officerNames.split(",");
@@ -172,8 +172,8 @@ public class ExcelReader {
             
             // Create and populate the project
             Project project = new Project(projectName, neighborhood, openDate, closeDate, visibility, officerSlots, managerName);
-            project.addFlatType(type1, units1);
-            project.addFlatType(type2, units2);
+            project.addFlatType(type1, units1, price1);
+            project.addFlatType(type2, units2, price2);
             
             for (String officer : officerName) {
                 if (!officer.trim().isEmpty()) { // ensure the name is not like ""
@@ -201,7 +201,7 @@ public class ExcelReader {
 
             // String name = row.getCell(0).getStringCellValue();
             String nric = row.getCell(1).getStringCellValue();
-            // int age = (int) row.getCell(2).getNumericCellValue();
+            // int age = getSafeNumericCellValue((row.getCell(2)));
             // String maritalStatus = row.getCell(3).getStringCellValue();
             String flatType = row.getCell(4).getStringCellValue();
             String projectName = row.getCell(5).getStringCellValue();
@@ -241,7 +241,7 @@ public class ExcelReader {
         for (Row row : sheet) {
             if (row.getRowNum() == 0) continue; // Skip header
 
-            int enquiryId = (int) row.getCell(0).getNumericCellValue();
+            int enquiryId = getSafeNumericCellValue((row.getCell(0)));
             String senderNRIC = row.getCell(1).getStringCellValue();
             String projectName = row.getCell(2).getStringCellValue();
             String content = row.getCell(3).getStringCellValue();
@@ -261,5 +261,21 @@ public class ExcelReader {
         }
 
         return enquiries;
-    }    
+    }
+    
+    // safeguard for numeric cell values
+    private static int getSafeNumericCellValue(Cell cell) throws NumberFormatException {
+        if (cell == null) throw new NumberFormatException("Cell is null");
+    
+        if (cell.getCellType() == CellType.NUMERIC) {
+            return (int) cell.getNumericCellValue();
+        } else if (cell.getCellType() == CellType.STRING) {
+            String str = cell.getStringCellValue().trim();
+            if (!str.isEmpty()) {
+                return Integer.parseInt(str);
+            }
+        }
+    
+        throw new NumberFormatException("Invalid cell format at row " + cell.getRowIndex() + ", col " + cell.getColumnIndex());
+    }
 }

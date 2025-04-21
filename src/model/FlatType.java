@@ -4,11 +4,12 @@ public class FlatType {
     private String type; // "2-Room" or "3-Room"
     private int totalUnits;
     private int remainingUnits;
-    // private int cost;
+    private int price;
 
-    public FlatType(String type, int totalUnits) {
+    public FlatType(String type, int totalUnits, int price) {
         this.type = type;
         this.totalUnits = totalUnits;
+        this.price = price;
         this.remainingUnits = totalUnits;
     }
 
@@ -26,6 +27,14 @@ public class FlatType {
 
     public int getRemainingUnits() {
         return remainingUnits;
+    }
+
+    public int getPrice() {
+        return price;
+    }
+
+    public void setPrice(int price) {
+        this.price = price;
     }
 
     public boolean isAvailable() {

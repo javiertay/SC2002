@@ -42,6 +42,10 @@ public class ManagerController {
 
         ProjectRegistry.addProject(project);
         System.out.println("Project created successfully.");
+
+        if (manager.getAssignedProject() == null) {
+            manager.assignToProject(project.getName());
+        }
     }
 
     public void viewAllProject() {
@@ -113,12 +117,13 @@ public class ManagerController {
         return true;
     }
     
-    public boolean updateFlatUnits(HDBManager manager, String flatType, int units) {
+    public boolean updateFlatUnits(HDBManager manager, String flatType, int units, int price) {
         Project project = getAssignedProject(manager);
         if (project == null) return false;
     
         if (!project.getFlatTypes().containsKey(flatType)) return false;
         project.getFlatTypes().get(flatType).setTotalUnits(units);
+        project.getFlatTypes().get(flatType).setPrice(price);
         return true;
     }
     

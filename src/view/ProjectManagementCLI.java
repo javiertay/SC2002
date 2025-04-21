@@ -43,7 +43,7 @@ public class ProjectManagementCLI {
 
     private void showMenu() {
         System.out.println("\n=== Project Management Menu ===");
-        System.out.println("1. View All Projects");
+        System.out.println("1. View All BTO Projects");
         System.out.println("2. View My Projects");
         System.out.println("3. Create Project");
         System.out.println("4. Edit Project Details");
@@ -58,24 +58,99 @@ public class ProjectManagementCLI {
     }
 
     private void createProject() {
+        System.out.println("\n--- Creating New BTO Project (type 'cancel' at any time to abort) ---");
+
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d/M/yyyy");
         LocalDate today = LocalDate.now();
 
         System.out.print("Project Name: ");
-        String name = scanner.nextLine();
+        String name = scanner.nextLine().trim();
+        if (name.equalsIgnoreCase("cancel") || name.equalsIgnoreCase("")) return;
+
         System.out.print("Neighborhood: ");
-        String neighbourhood = scanner.nextLine();
-        System.out.print("2-Room Units: ");
-        int twoRoom = Integer.parseInt(scanner.nextLine());
-        System.out.print("3-Room Units: ");
-        int threeRoom = Integer.parseInt(scanner.nextLine());
-        System.out.print("Max Officer Slots: ");
-        int maxSlots = Integer.parseInt(scanner.nextLine());
+        String neighbourhood = scanner.nextLine().trim();
+        if (neighbourhood.equalsIgnoreCase("cancel") || neighbourhood.equalsIgnoreCase("")) return;
+
+        int twoRoom = -1;
+        while (twoRoom < 0) {
+            System.out.print("Number of 2-Room units that will be available: ");
+            try {
+                twoRoom = Integer.parseInt(scanner.nextLine().trim());
+                if (twoRoom < 0) {
+                    System.out.println("Number of units cannot be negative.");
+                }
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid number. Exiting project creation");
+                return;
+            }
+        }
+
+        int priceTwoRoom = -1;
+        while (priceTwoRoom < 0) {
+            System.out.print("Price of a 2-Room unit: ");
+            try {
+                priceTwoRoom = Integer.parseInt(scanner.nextLine().trim());
+                if (priceTwoRoom < 0) {
+                    System.out.println("Price cannot be negative.");
+                }
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid number. Exiting project creation");
+                return;
+            }
+        }
+
+        int threeRoom = -1;
+        while (threeRoom < 0) {
+            System.out.print("Number of 3-Room units that will be available: ");
+            try {
+                threeRoom = Integer.parseInt(scanner.nextLine().trim());
+                if (threeRoom < 0) {
+                    System.out.println("Number of units cannot be negative.");
+                }
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid number. Exiting project creation");
+                return;
+            }
+        }
+
+        int priceThreeRoom = -1;
+        while (priceThreeRoom < 0) {
+            System.out.print("Price of a 3-Room unit:  ");
+            try {
+                priceThreeRoom = Integer.parseInt(scanner.nextLine().trim());
+                if (priceThreeRoom < 0) {
+                    System.out.println("Price of units cannot be negative.");
+                }
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid number. Exiting project creation");
+                return;
+            }
+        }
+
+        int maxSlots = 10; // default
+        while (true) {
+            System.out.print("Max Officer Slots (Press Enter for default 10): ");
+            String input = scanner.nextLine().trim();
+            if (input.isEmpty()) {
+                break; // use default
+            }
+            try {
+                int val = Integer.parseInt(input);
+                if (val < 0 || val > 10) {
+                    System.out.println("Officer slots must be between 0 and 10.");
+                } else {
+                    maxSlots = val;
+                    break;
+                }
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid number. Please try again.");
+            }
+        }
 
         LocalDate openDate = null;
         while (openDate == null) {
             System.out.print("Enter Project Open Date (dd/MM/yyyy): ");
-            String openDateStr = scanner.nextLine();
+            String openDateStr = scanner.nextLine().trim();
             try {
                 openDate = LocalDate.parse(openDateStr, formatter);
                 if (openDate.isBefore(today)) {
@@ -89,16 +164,19 @@ public class ProjectManagementCLI {
 
         LocalDate closeDate = null;
         while (closeDate == null) {
-            System.out.print("Enter Project Close Date (dd/MM/yyyy): ");
-            String closeDateStr = scanner.nextLine();
+            System.out.print("Enter Project Close Date (dd/MM/yyyy or how many days the project stays open): ");
+            String closeDateStr = scanner.nextLine().trim();
             try {
                 if (closeDateStr.matches("\\d+")) {
                     int days = Integer.parseInt(closeDateStr);
-                    closeDate = openDate.plusDays(days);
+                    if (days <= 0) {
+                        System.out.println("Duration must be at least 1 day.");
+                    } else {
+                        closeDate = openDate.plusDays(days);
+                    }
                 } else {
                     closeDate = LocalDate.parse(closeDateStr, formatter);
                 }
-                // closeDate = LocalDate.parse(closeDateStr, formatter);
                 if (closeDate.isBefore(openDate)) {
                     System.out.println("Close date cannot be before open date. Please try again.");
                     closeDate = null;
@@ -109,16 +187,24 @@ public class ProjectManagementCLI {
         }
 
         Project p = new Project(name, neighbourhood, openDate, closeDate, true, maxSlots, manager.getName());
-        p.addFlatType("2-Room", twoRoom);
-        p.addFlatType("3-Room", threeRoom);
+        p.addFlatType("2-Room", twoRoom, priceTwoRoom);
+        p.addFlatType("3-Room", threeRoom, priceThreeRoom);
         managerController.createProject(p, manager);
     }
 
     private void editProjectDetails() {
-        Project project = ProjectRegistry.getProjectByName(manager.getAssignedProject());
+        List<Project> projects = managerController.getProjectsCreatedByManager(manager);
+        for (Project p : projects) {
+            System.out.println("- " + p.getName() + " | Open on " + p.getOpenDate() + " | Close on " + p.getCloseDate() + " | Officer(s): " + (p.getOfficerList().isEmpty() ? "No officer assigned" : String.join(", ", p.getOfficerList())));
+        }
+        System.out.print("Enter Project Name to edit: (or back to return) ");
+        String projectName = scanner.nextLine().trim();
+        if (projectName.equalsIgnoreCase("back") || projectName.equalsIgnoreCase("")) return;
+
+        Project project = ProjectRegistry.getProjectByName(projectName);
 
         if (project == null) {
-            System.out.println("You have not created any projects / are not assigned to one");
+            System.out.println("BTO Project not found! Please try again.");
             return;
         }
 
@@ -168,7 +254,19 @@ public class ProjectManagementCLI {
                         System.out.print("Enter new units for " + type + ": ");
                         try {
                             int units = Integer.parseInt(scanner.nextLine().trim());
-                            boolean success = managerController.updateFlatUnits(manager, type, units);
+                            if (units < 0) {
+                                System.out.println("Units cannot be negative.");
+                                continue;
+                            }
+                    
+                            System.out.print("Enter new price for " + type + ": ");
+                            int price = Integer.parseInt(scanner.nextLine().trim());
+                            if (price < 0) {
+                                System.out.println("Price cannot be negative.");
+                                continue;
+                            }
+
+                            boolean success = managerController.updateFlatUnits(manager, type, units, price);
                             System.out.println(success ? "Updated." : "Failed to update " + type);
                         } catch (Exception e) {
                             System.out.println("Invalid number.");
@@ -220,7 +318,7 @@ public class ProjectManagementCLI {
             return;
         }
 
-        System.out.println("\n=== Projects Created By You ===");
+        System.out.println("\n=== BTO Projects Created By You ===");
         for (Project p : created) {
             System.out.println("- Name: " + p.getName());
             System.out.println("  Neighborhood: " + p.getNeighborhood());
