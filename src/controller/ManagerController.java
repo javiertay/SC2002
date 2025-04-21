@@ -120,9 +120,12 @@ public class ManagerController {
     public boolean updateFlatUnits(HDBManager manager, String flatType, int units, int price) {
         Project project = getAssignedProject(manager);
         if (project == null) return false;
-    
+
+        int noOfBookedUnits = project.getFlatTypes().get(flatType).getTotalUnits() - project.getFlatTypes().get(flatType).getRemainingUnits();
+
         if (!project.getFlatTypes().containsKey(flatType)) return false;
         project.getFlatTypes().get(flatType).setTotalUnits(units);
+        project.getFlatTypes().get(flatType).setRemainingUnits(units - noOfBookedUnits);
         project.getFlatTypes().get(flatType).setPrice(price);
         return true;
     }
@@ -134,15 +137,7 @@ public class ManagerController {
         project.setMaxOfficerSlots(slots);
         return true;
     }
-    
-    public boolean toggleVisibility(HDBManager manager) {
-        Project project = getAssignedProject(manager);
-        if (project == null) return false;
-    
-        project.setVisibility(!project.isVisible());
-        return true;
-    }
-    
+        
     // Utility
     private Project getAssignedProject(HDBManager manager) {
         String name = manager.getAssignedProject();

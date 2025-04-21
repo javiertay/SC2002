@@ -29,6 +29,10 @@ public class FlatType {
         return remainingUnits;
     }
 
+    public void setRemainingUnits(int remainingUnits) {
+        this.remainingUnits = remainingUnits;
+    }
+
     public int getPrice() {
         return price;
     }

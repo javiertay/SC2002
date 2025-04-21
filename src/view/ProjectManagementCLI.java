@@ -9,7 +9,6 @@ import controller.ManagerController;
 import model.FlatType;
 import model.HDBManager;
 import model.Project;
-import model.ProjectRegistry;
 
 public class ProjectManagementCLI {
     private final HDBManager manager;
@@ -30,15 +29,12 @@ public class ProjectManagementCLI {
 
             switch (choice) {
                 case 1 -> viewAllProjects();
-                case 2 -> viewCreatedProjects();
+                case 2 -> viewMyProjects();
                 case 3 -> createProject();
-                case 4 -> editProjectDetails();
-                case 5 -> toggleProjectVisibility();
-                case 6 -> deleteProject();
-                case 7 -> System.out.println("Exiting...");            
+                case 4 -> System.out.println("Exiting...");            
                 default -> System.out.println("Invalid option");
             }
-        } while (choice != 7);
+        } while (choice != 4);
     }
 
     private void showMenu() {
@@ -46,10 +42,7 @@ public class ProjectManagementCLI {
         System.out.println("1. View All BTO Projects");
         System.out.println("2. View My Projects");
         System.out.println("3. Create Project");
-        System.out.println("4. Edit Project Details");
-        System.out.println("5. Toggle Project Visibility");
-        System.out.println("6. Delete Project");
-        System.out.println("7. Exit");
+        System.out.println("4. Back");
         System.out.print("Enter your choice: ");
     }
 
@@ -192,22 +185,7 @@ public class ProjectManagementCLI {
         managerController.createProject(p, manager);
     }
 
-    private void editProjectDetails() {
-        List<Project> projects = managerController.getProjectsCreatedByManager(manager);
-        for (Project p : projects) {
-            System.out.println("- " + p.getName() + " | Open on " + p.getOpenDate() + " | Close on " + p.getCloseDate() + " | Officer(s): " + (p.getOfficerList().isEmpty() ? "No officer assigned" : String.join(", ", p.getOfficerList())));
-        }
-        System.out.print("Enter Project Name to edit: (or back to return) ");
-        String projectName = scanner.nextLine().trim();
-        if (projectName.equalsIgnoreCase("back") || projectName.equalsIgnoreCase("")) return;
-
-        Project project = ProjectRegistry.getProjectByName(projectName);
-
-        if (project == null) {
-            System.out.println("BTO Project not found! Please try again.");
-            return;
-        }
-
+    private void editProjectDetails(Project project) {
         boolean editing = true;
         while (editing) {
             System.out.println("\n--- Edit Project: " + project.getName() + " ---");
@@ -216,8 +194,7 @@ public class ProjectManagementCLI {
             System.out.println("3. Edit Close Date (Current: " + project.getCloseDate() + ")");
             System.out.println("4. Edit Flat Units");
             System.out.println("5. Edit Officer Slots (Current: " + project.getMaxOfficerSlots() + ")");
-            System.out.println("6. Toggle Visibility (Currently: " + (project.isVisible() ? "Visible" : "Hidden") + ")");
-            System.out.println("7. Back");
+            System.out.println("6. Back");
             System.out.print("Choose an option: ");
             int choice = Integer.parseInt(scanner.nextLine());
 
@@ -225,11 +202,7 @@ public class ProjectManagementCLI {
                 case 1 -> {
                     System.out.print("Enter new neighborhood: ");
                     String neighborhood = scanner.nextLine().trim();
-                    if (managerController.updateNeighborhood(manager, neighborhood)) {
-                        System.out.println("Neighborhood updated.");
-                    } else {
-                        System.out.println("Update failed.");
-                    }
+                    System.out.println(managerController.updateNeighborhood(manager, neighborhood) ? "Neighborhood updated." : "Update failed.");
                 }
                 case 2 -> {
                     System.out.print("Enter new open date (YYYY-MM-DD): ");
@@ -282,55 +255,92 @@ public class ProjectManagementCLI {
                         System.out.println("Invalid number.");
                     }
                 }
-                case 6 -> {
-                    System.out.println(managerController.toggleVisibility(manager) ? "Visibility toggled." : "Failed to update visibility.");
-                }
-                case 7 -> editing = false;
+                case 6 -> editing = false;
                 default -> System.out.println("Invalid option.");
             }
         }
     }
 
-    private void deleteProject() {
-        System.out.print("Enter Project Name to delete: ");
-        String name = scanner.nextLine();
-
-        System.out.print("Are you sure you want to delete this project? (Y/N): ");
-        String confirm = scanner.nextLine().trim().toUpperCase();
-        if (confirm.equals("Y")) {
-            managerController.deleteProject(name);
-        } else {
-            System.out.println("Deletion cancelled.");
+    private void viewProjectDetails(Project project) {
+        System.out.println("  Neighborhood: " + project.getNeighborhood());
+        System.out.println("  Open Date: " + project.getOpenDate() + " | Close Date: " + project.getCloseDate());
+        System.out.println("  Max officer slots: " + project.getMaxOfficerSlots());
+        System.out.println("  Officer(s): " + (project.getOfficerList().isEmpty() ? "No officer assigned" : String.join(", ", project.getOfficerList())));
+        System.out.println("  Flat Types:");
+        for (FlatType ft : project.getFlatTypes().values()) {
+            System.out.println("  -" +ft.getType() + ": " + ft.getRemainingUnits() + " units");
         }
-    }
-    
-    private void toggleProjectVisibility() {
-        System.out.print("Enter Project Name to toggle visibility: ");
-        String name = scanner.nextLine();
-        managerController.toggleProjectVisibility(name);
+        System.out.println("  Visibility: " + (project.isVisible() ? "Visible" : "Hidden"));
+        System.out.println("------------------------------------");
     }
 
-    private void viewCreatedProjects() {
-        List<Project> created = managerController.getProjectsCreatedByManager(manager);
-        
-        if (created.isEmpty()) {
-            System.out.println("You haven’t created any projects yet.");
+    private void viewMyProjects() {
+        List<Project> projects = managerController.getProjectsCreatedByManager(manager);
+    
+        if (projects.isEmpty()) {
+            System.out.println("You have not created any projects.");
             return;
         }
-
-        System.out.println("\n=== BTO Projects Created By You ===");
-        for (Project p : created) {
-            System.out.println("- Name: " + p.getName());
-            System.out.println("  Neighborhood: " + p.getNeighborhood());
-            System.out.println("  Open: " + p.getOpenDate() + " | Close: " + p.getCloseDate());
-            System.out.println("  Officer(s): " + (p.getOfficerList().isEmpty() ? "No officer assigned" : String.join(", ", p.getOfficerList())));
-            System.out.println("  Flat Types:");
-            for (FlatType ft : p.getFlatTypes().values()) {
-                System.out.println("  -" +ft.getType() + ": " + ft.getRemainingUnits() + " units");
+    
+        while (true) {
+            System.out.println("\n=== Your Projects ===");
+            for (int i = 0; i < projects.size(); i++) {
+                Project p = projects.get(i);
+                String status = p.getOpenDate().isAfter(LocalDate.now())
+                    ? "Upcoming: opens " + p.getOpenDate()
+                    : "Open: " + p.getOpenDate() + " - " + p.getCloseDate();
+                System.out.println((i + 1) + ". " + p.getName() + " (" + status + ")");
             }
-            System.out.println("  Visibility: " + (p.isVisible() ? "Visible" : "Hidden"));
-            System.out.println("------------------------------------");
+            System.out.println((projects.size() + 1) + ". Back");
+            System.out.print("\nSelect a project to manage: ");
+    
+            String input = scanner.nextLine().trim();
+            int choice;
+            try {
+                choice = Integer.parseInt(input);
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid input. Please enter a number.");
+                continue;
+            }
+    
+            if (choice == projects.size() + 1) return;
+    
+            if (choice >= 1 && choice <= projects.size()) {
+                Project selected = projects.get(choice - 1);
+                manageProject(selected);
+            } else {
+                System.out.println("Invalid choice. Please try again.");
+            }
         }
     }
 
+    private void manageProject(Project project) {
+        while (true) {
+            System.out.println("\n--- Managing: " + project.getName() + " ---");
+            viewProjectDetails(project);
+            System.out.println("1. Edit Project Details");
+            System.out.println("2. Toggle Visibility (Currently: " + (project.isVisible() ? "Visible" : "Hidden") + ")");
+            System.out.println("3. Delete Project");
+            System.out.println("4. Back");
+            System.out.print("Enter choice: ");
+    
+            String input = scanner.nextLine().trim();
+            switch (input) {
+                case "1" -> editProjectDetails(project);
+                case "2" -> managerController.toggleProjectVisibility(project.getName());
+                case "3" -> {
+                    System.out.print("Are you sure you want to delete this project? (Y/N): ");
+                    String confirm = scanner.nextLine().trim().toUpperCase();
+                    if (confirm.equals("Y")) {
+                        managerController.deleteProject(project.getName());
+                    } else {
+                        System.out.println("Deletion cancelled.");
+                    }
+                    return;
+                }
+                case "4" -> { return; }
+                default -> System.out.println("Invalid option. Please try again.");
+            }
+        }
+    }
 }
