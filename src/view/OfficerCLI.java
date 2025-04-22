@@ -6,7 +6,10 @@ import controller.ApplicationController;
 import controller.AuthController;
 import model.*;
 import model.HDBOfficer.RegistrationStatus;
+import util.Breadcrumb;
+import util.InputUtil;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 
@@ -18,6 +21,7 @@ public class OfficerCLI {
     private final ApplicationController applicationController;
     private final ApplicationCLI applicationCLI;
     private final Scanner scanner;
+    private Breadcrumb breadcrumb;
 
     public OfficerCLI(HDBOfficer officer, OfficerController officerController, AuthController authController, EnquiryController enquiryController, ApplicationCLI applicationCLI, ApplicationController applicationController) {
         this.officer = officer;
@@ -27,16 +31,25 @@ public class OfficerCLI {
         this.applicationController = applicationController;
         this.applicationCLI = applicationCLI;
         this.scanner = new Scanner(System.in);
+        this.breadcrumb = new Breadcrumb();
     }
 
     public void start() {
+        breadcrumb.push("HDB Officer Menu");
+        showDashboard();
+
         int choice;
         do {
             showMenu();
-            choice = Integer.parseInt(scanner.nextLine());
+            choice = InputUtil.readInt(scanner);
 
             switch (choice) {
-                case 1 -> applicationCLI.start(officer);    
+                case 1 -> {
+                    breadcrumb.push("BTO Project Hub");
+                    applicationCLI.setBreadcrumb(breadcrumb);
+                    applicationCLI.start(officer);
+                    breadcrumb.pop(); // Return to Applicant Menu after exiting Application Management Hub
+                }   
                 case 2 -> registerForProject();
                 case 3 -> viewRegistrationStatus();
                 case 4 -> {
@@ -45,22 +58,22 @@ public class OfficerCLI {
                         }
                 case 5 -> {
                             if (!isActionAllowed()) break;
+                            breadcrumb.push("Flat Selection Hub");
                             ApplicationManagementCLI applicationManagementCLI = new ApplicationManagementCLI(officer, applicationController, officerController);
+                            applicationManagementCLI.setBreadcrumb(breadcrumb);
                             applicationManagementCLI.start();
+                            breadcrumb.pop(); // Return to Officer Menu after exiting Application Management Hub
                         }
-                case 6 -> {
-                            if (!isActionAllowed()) break;
-                            manageEnquiries();
-                        }
+                case 6 -> manageEnquiries();
                 case 7 -> authController.promptPasswordChange(officer, scanner);
-                case 8 -> System.out.println("Logging out...");
+                case 0 -> System.out.println("Logging out...");
                 default -> System.out.println("Invalid option. Please try again.");
             }
-        } while (choice != 8);
+        } while (choice != 0);
     }
 
     private void showMenu() {
-        System.out.println("\n=== HDB Officer Menu ===");
+        System.out.println("\n=== " + breadcrumb.getPath() + " ===");
         System.out.println("1. Manage HDB Applications");
         System.out.println("2. Register for a Project");
         System.out.println("3. View Registration Status");
@@ -68,16 +81,14 @@ public class OfficerCLI {
         if (officer.isAssigned()) {
             System.out.println("4. View Assigned Project Details");
             System.out.println("5. Flat Selection (Assign Flat)");
-            System.out.println("6. Manage Enquiries");
         } else {
             System.out.println("4. View Assigned Project Details (Unavailable)");
             System.out.println("5. Flat Selection (Unavailable)");
-            System.out.println("6. Manage Enquiries (Unavailable)");
         }
-
+        
+        System.out.println("6. Manage Enquiries");
         System.out.println("7. Change Password");
-        System.out.println("8. Logout");
-        System.out.print("Select an option: ");
+        System.out.println("0. Logout");
     }
 
     private void registerForProject() {
@@ -121,8 +132,10 @@ public class OfficerCLI {
     }
 
     private void manageEnquiries() {
-        EnquiryCLI enquiryCLI = new EnquiryCLI(officer, enquiryController);
+        breadcrumb.push("Officer Enquiry Hub");
+        EnquiryCLI enquiryCLI = new EnquiryCLI(officer, enquiryController, breadcrumb);
         enquiryCLI.start();
+        breadcrumb.pop(); // Return to Officer Menu after exiting Enquiry Management Hub
     }
 
     private boolean isActionAllowed() {
@@ -132,4 +145,28 @@ public class OfficerCLI {
         }
         return true;
     }
+
+    private void showDashboard() {
+        System.out.println("\nWelcome back " + officer.getName() + "!");
+    
+        String assignedProject = officer.getAssignedProject();
+        if (assignedProject == null) {
+            System.out.println(" - You are not currently assigned to any project.");
+            return;
+        }
+        
+        System.out.println(" - Your Assigned Project: " + assignedProject);
+    
+        List<Application> applications = ApplicationRegistry.getSuccessfulApplicationsByProject(assignedProject);
+        int pendingBookings = applications.size();
+    
+        System.out.println(" - " + pendingBookings + " Applications pending booking");
+    
+        List<Enquiry> enquiries = EnquiryRegistry.getEnquiriesByProject(assignedProject);
+        long pendingReplies = enquiries.stream()
+            .filter(e -> e.getReply() == null)
+            .count();
+    
+        System.out.println(" - " + pendingReplies + " Enquiries awaiting reply");
+    }    
 }

@@ -26,7 +26,7 @@ public class AuthController {
             return null;
         }
 
-        System.out.println("Login successful! Welcome, " + user.getName() + ".");
+        System.out.println("Login successful!");
         return user;
     }
 

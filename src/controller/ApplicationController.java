@@ -11,64 +11,7 @@ import util.*;
 public class ApplicationController {
 
     // View all available projects for the applicant based on age and marital status
-    public void getAllAvailableProjects(Applicant applicant, Filter filter) {
-        List<Project> projects = ProjectRegistry.filterByVisibility(true).stream()
-                .filter(project -> !LocalDate.now().isAfter(project.getCloseDate()))
-                .toList();
-        
-        if (applicant.getMaritalStatus().equalsIgnoreCase("single")) {
-            projects = projects.stream().filter(project -> {
-                FlatType twoRoom = project.getFlatTypes().get("2-Room");
-                return twoRoom != null && twoRoom.getRemainingUnits() > 0;
-            }).toList();
-        }
-        
-        List<Project> filtered = FilterUtil.applyFilter(projects, filter);
-
-        if (filtered.isEmpty()) {
-            System.out.println("No projects found.");
-            return;
-        }
-        
-        System.out.println("\nAvailable Projects for You:");
-        boolean isEligible = false;
-        for (Project project : filtered) {
-            boolean show2Room = false;
-            boolean show3Room = false;
-
-            if (applicant.getMaritalStatus().equalsIgnoreCase("single") && applicant.getAge() >= 35) {
-                show2Room = true;
-            } else if (applicant.getMaritalStatus().equalsIgnoreCase("married") && applicant.getAge() >= 21) {
-                show2Room = true;
-                show3Room = true;
-            } else {
-                continue;
-            }
-
-            isEligible = true; // Check if the applicant is eligible for any project
-
-            System.out.println("  Project Name: " + project.getName());
-            System.out.println("  Neighborhood: " + project.getNeighborhood());
-            System.out.println("  Flat Types:");
-            for (FlatType ft : project.getFlatTypes().values()) {
-                String type = ft.getType();
-                if ((type.equalsIgnoreCase("2-Room") && show2Room) ||
-                    (type.equalsIgnoreCase("3-Room") && show3Room)) {
-                    System.out.println("    - " + type + ": " + ft.getRemainingUnits() + " units left");
-                }
-            }
-            System.out.println("  Project Open Date: " + project.getOpenDate());
-            System.out.println("  Project Close Date: " + project.getCloseDate());
-
-            System.out.println("----------------------------------");
-        }
-
-        if (!isEligible) {
-            System.out.println("You are not eligible for any projects.");
-        }
-    }
-
-    public List<Project> fetchAvailableProjects(Applicant applicant) {
+    public List<Project> getAllAvailableProjects(Applicant applicant) {
         List<Project> projects = ProjectRegistry.filterByVisibility(true).stream()
             .filter(project -> !LocalDate.now().isAfter(project.getCloseDate()))
             .toList();
@@ -81,11 +24,12 @@ public class ApplicationController {
         }
 
         return projects;
-        
     }
     
     // Submit application
     public boolean submitApplication(Applicant applicant, String projectName, String flatType) {
+        LocalDate today = LocalDate.now();
+
         if (ApplicationRegistry.hasApplication(applicant.getNric())) {
             System.out.println("You already have an active application.");
             return false;
@@ -103,6 +47,11 @@ public class ApplicationController {
 
         if (project == null) {
             System.out.println("Project not found.");
+            return false;
+        }
+
+        if (today.isBefore(project.getOpenDate()) || today.isAfter(project.getCloseDate())) {
+            System.out.println("This project is not open for applications.");
             return false;
         }
 
@@ -138,7 +87,7 @@ public class ApplicationController {
     public void viewApplicationStatus(Applicant applicant) {
         Application application = ApplicationRegistry.getApplicationByNRIC(applicant.getNric());
         if (application == null) {
-            System.out.println("ℹYou have not applied for any project.");
+            System.out.println("You have not applied for any project.");
         } else {
             System.out.println(application.toString());
         }
@@ -194,9 +143,6 @@ public class ApplicationController {
             System.out.println("Only pending applications can be processed");
             return;
         }
-
-        // Project project = ProjectRegistry.getProjectByName(projectName);
-        // FlatType flat = project.getFlatType(flatType);
 
         if (status == Application.Status.SUCCESSFUL) {
             String flatType = application.getFlatType();

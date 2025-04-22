@@ -71,16 +71,14 @@ public class Application implements Searchable{
 
     @Override
     public String toString() {
-        return "Application[" +
-                "Applicant=" + applicant.getNric() +
-                ", Project=" + project.getName() +
-                ", FlatType=" + flatType +
-                ", Status=" + status +
-                ']';
+        return "Applicant =" + applicant.getNric() +
+                ", Project =" + project.getName() +
+                ", FlatType =" + flatType +
+                ", Status =" + status;
     }
 
     @Override
-    public boolean matches(Filter filter) {
+    public boolean matches(Filter filter) {        
         if (filter.getFlatType() != null &&
             !this.getFlatType().equalsIgnoreCase(filter.getFlatType())) {
             return false;

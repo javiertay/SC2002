@@ -9,13 +9,18 @@ import controller.ManagerController;
 import model.FlatType;
 import model.HDBManager;
 import model.Project;
+import util.Breadcrumb;
+import util.InputUtil;
 
 public class ProjectManagementCLI {
     private final HDBManager manager;
     private final ManagerController managerController;
     private final Scanner scanner;
+    private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d/M/yyyy");
+    private Breadcrumb breadcrumb;
 
-    public ProjectManagementCLI(HDBManager manager, ManagerController managerController, Scanner scanner) {
+    public ProjectManagementCLI(HDBManager manager, ManagerController managerController, Scanner scanner, Breadcrumb breadcrumb) {
+        this.breadcrumb = breadcrumb;
         this.manager = manager;
         this.managerController = managerController;
         this.scanner = scanner;
@@ -25,25 +30,28 @@ public class ProjectManagementCLI {
         int choice;
         do {
             showMenu();
-            choice = Integer.parseInt(scanner.nextLine());
+            choice = InputUtil.readInt(scanner);
 
             switch (choice) {
                 case 1 -> viewAllProjects();
-                case 2 -> viewMyProjects();
+                case 2 -> {
+                    breadcrumb.push("My Projects");
+                    viewMyProjects();
+                    breadcrumb.pop(); // Return to Project Management Hub after exiting My Projects
+                }
                 case 3 -> createProject();
-                case 4 -> System.out.println("Exiting...");            
+                case 0 -> System.out.println("Exiting...");            
                 default -> System.out.println("Invalid option");
             }
-        } while (choice != 4);
+        } while (choice != 0);
     }
 
     private void showMenu() {
-        System.out.println("\n=== Project Management Menu ===");
+        System.out.println("\n=== " + breadcrumb.getPath() + " ===");
         System.out.println("1. View All BTO Projects");
         System.out.println("2. View My Projects");
         System.out.println("3. Create Project");
-        System.out.println("4. Back");
-        System.out.print("Enter your choice: ");
+        System.out.println("0. Back to Previous Menu");
     }
 
     private void viewAllProjects() {
@@ -53,7 +61,6 @@ public class ProjectManagementCLI {
     private void createProject() {
         System.out.println("\n--- Creating New BTO Project (type 'cancel' at any time to abort) ---");
 
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d/M/yyyy");
         LocalDate today = LocalDate.now();
 
         System.out.print("Project Name: ");
@@ -190,13 +197,12 @@ public class ProjectManagementCLI {
         while (editing) {
             System.out.println("\n--- Edit Project: " + project.getName() + " ---");
             System.out.println("1. Edit Neighborhood (Current: " + project.getNeighborhood() + ")");
-            System.out.println("2. Edit Open Date (Current: " + project.getOpenDate() + ")");
-            System.out.println("3. Edit Close Date (Current: " + project.getCloseDate() + ")");
+            System.out.println("2. Edit Open Date (Current: " + project.getOpenDate().format(formatter) + ")");
+            System.out.println("3. Edit Close Date (Current: " + project.getCloseDate().format(formatter) + ")");
             System.out.println("4. Edit Flat Units");
             System.out.println("5. Edit Officer Slots (Current: " + project.getMaxOfficerSlots() + ")");
-            System.out.println("6. Back");
-            System.out.print("Choose an option: ");
-            int choice = Integer.parseInt(scanner.nextLine());
+            System.out.println("0. Back");
+            int choice = InputUtil.readInt(scanner);
 
             switch (choice) {
                 case 1 -> {
@@ -205,18 +211,18 @@ public class ProjectManagementCLI {
                     System.out.println(managerController.updateNeighborhood(manager, neighborhood) ? "Neighborhood updated." : "Update failed.");
                 }
                 case 2 -> {
-                    System.out.print("Enter new open date (YYYY-MM-DD): ");
+                    System.out.print("Enter new open date (DD-MM-YYYY): ");
                     try {
-                        LocalDate date = LocalDate.parse(scanner.nextLine().trim());
+                        LocalDate date = LocalDate.parse(scanner.nextLine().trim(), formatter);
                         System.out.println(managerController.updateOpenDate(manager, date) ? "Open date updated." : "Update failed.");
                     } catch (Exception e) {
                         System.out.println("Invalid date format.");
                     }
                 }
                 case 3 -> {
-                    System.out.print("Enter new close date (YYYY-MM-DD): ");
+                    System.out.print("Enter new close date (DD-MM-YYYY): ");
                     try {
-                        LocalDate date = LocalDate.parse(scanner.nextLine().trim());
+                        LocalDate date = LocalDate.parse(scanner.nextLine().trim(), formatter);
                         System.out.println(managerController.updateCloseDate(manager, date) ? "Close date updated." : "Update failed.");
                     } catch (Exception e) {
                         System.out.println("Invalid date format.");
@@ -255,7 +261,7 @@ public class ProjectManagementCLI {
                         System.out.println("Invalid number.");
                     }
                 }
-                case 6 -> editing = false;
+                case 0 -> editing = false;
                 default -> System.out.println("Invalid option.");
             }
         }
@@ -263,12 +269,12 @@ public class ProjectManagementCLI {
 
     private void viewProjectDetails(Project project) {
         System.out.println("  Neighborhood: " + project.getNeighborhood());
-        System.out.println("  Open Date: " + project.getOpenDate() + " | Close Date: " + project.getCloseDate());
+        System.out.println("  Open Date: " + project.getOpenDate().format(formatter) + " | Close Date: " + project.getCloseDate().format(formatter));
         System.out.println("  Max officer slots: " + project.getMaxOfficerSlots());
         System.out.println("  Officer(s): " + (project.getOfficerList().isEmpty() ? "No officer assigned" : String.join(", ", project.getOfficerList())));
         System.out.println("  Flat Types:");
         for (FlatType ft : project.getFlatTypes().values()) {
-            System.out.println("  -" +ft.getType() + ": " + ft.getRemainingUnits() + " units");
+            System.out.println("  -" +ft.getType() + ": " + ft.getRemainingUnits() + " units left at $" + ft.getPrice() + " each");
         }
         System.out.println("  Visibility: " + (project.isVisible() ? "Visible" : "Hidden"));
         System.out.println("------------------------------------");
@@ -283,12 +289,12 @@ public class ProjectManagementCLI {
         }
     
         while (true) {
-            System.out.println("\n=== Your Projects ===");
+            System.out.println("\n=== " + breadcrumb.getPath() + " ===");
             for (int i = 0; i < projects.size(); i++) {
                 Project p = projects.get(i);
                 String status = p.getOpenDate().isAfter(LocalDate.now())
-                    ? "Upcoming: opens " + p.getOpenDate()
-                    : "Open: " + p.getOpenDate() + " - " + p.getCloseDate();
+                    ? "Upcoming: opens " + p.getOpenDate().format(formatter)
+                    : "Open: " + p.getOpenDate().format(formatter) + " - " + p.getCloseDate().format(formatter);
                 System.out.println((i + 1) + ". " + p.getName() + " (" + status + ")");
             }
             System.out.println((projects.size() + 1) + ". Back");
@@ -321,7 +327,7 @@ public class ProjectManagementCLI {
             System.out.println("1. Edit Project Details");
             System.out.println("2. Toggle Visibility (Currently: " + (project.isVisible() ? "Visible" : "Hidden") + ")");
             System.out.println("3. Delete Project");
-            System.out.println("4. Back");
+            System.out.println("0. Back to Previous Menu");
             System.out.print("Enter choice: ");
     
             String input = scanner.nextLine().trim();
@@ -338,7 +344,7 @@ public class ProjectManagementCLI {
                     }
                     return;
                 }
-                case "4" -> { return; }
+                case "0" -> { return; }
                 default -> System.out.println("Invalid option. Please try again.");
             }
         }

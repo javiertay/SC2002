@@ -1,6 +1,7 @@
 package controller;
 
 import model.*;
+import util.TableUtil;
 
 import java.time.LocalDate;
 import java.util.*;
@@ -56,23 +57,37 @@ public class ManagerController {
             return;
         }
 
-        System.out.println("=== All Projects ===");
-        for (Project p : projects) {
-            System.out.println("  Project Name: " + p.getName());
-            System.out.println("  Neighborhood: " + p.getNeighborhood());
-            System.out.println("  Flat Types:");
-            for (FlatType ft : p.getFlatTypes().values()) {
-                System.out.println("    - " + ft.getType() + ": " + ft.getRemainingUnits() + " units left");
-            }
-            System.out.println("  Open Date: " + p.getOpenDate());
-            System.out.println("  Close Date: " + p.getCloseDate());
-            System.out.println("  Visible: " + (p.isVisible() ? "Yes" : "No"));
-            System.out.println("  Manager Name: " + p.getManagerName());
-            System.out.println("  Officer Slots Used: " + p.getCurrentOfficerSlots() + "/" + p.getMaxOfficerSlots());
-            System.out.println("  Officer(s): " + (p.getOfficerList().isEmpty() ? "No officer assigned" : String.join(", ", p.getOfficerList())));
+        List<String> headers = List.of("Name", "Neighborhood", "Open Date", "Close Date", "Manager", "Visibility", "Flat Type", "Units Left", "Price", "Officer Slots", "Officers");
+        List<List<String>> rows = new ArrayList<>();
 
-            System.out.println("----------------------------------");
+        for (Project p : projects) {
+            String visibility = p.isVisible() ? "Yes" : "No";
+            String officerSlots = p.getCurrentOfficerSlots() + "/" + p.getMaxOfficerSlots();
+            String officers = p.getOfficerList().isEmpty() ? "No officer assigned" : String.join(", ", p.getOfficerList());
+
+            List<FlatType> flatTypes = new ArrayList<>(p.getFlatTypes().values());
+            for (int i = 0; i < flatTypes.size(); i++) {
+                FlatType ft = flatTypes.get(i);
+
+                List<String> row = List.of(
+                    i == 0 ? p.getName() : "",
+                    i == 0 ? p.getNeighborhood() : "",
+                    i == 0 ? p.getOpenDate().toString() : "",
+                    i == 0 ? p.getCloseDate().toString() : "",
+                    i == 0 ? p.getManagerName() : "",
+                    i == 0 ? visibility : "",
+                    ft.getType(),
+                    String.valueOf(ft.getRemainingUnits()),
+                    "$" + ft.getPrice(),
+                    i == 0 ? officerSlots : "",
+                    i == 0 ? officers : ""
+                );
+
+                rows.add(row);
+            }
         }
+
+        TableUtil.printTable(headers, rows);
     }
 
     public List<Project> getProjectsCreatedByManager(HDBManager manager) {
@@ -251,10 +266,10 @@ public class ManagerController {
         System.out.println();
     }
 
-    public void viewPendingOfficerApplications(HDBManager manager) {
+    public List<HDBOfficer> getPendingOfficerApplications(HDBManager manager) {
         String projectName = manager.getAssignedProject();
         List<HDBOfficer> pendingOfficers = new ArrayList<>();
-
+    
         for (User user : authController.getAllUsers().values()) {
             if (user instanceof HDBOfficer officer) {
                 HDBOfficer.RegistrationStatus status = officer.getRegistrationStatus(projectName);
@@ -263,14 +278,26 @@ public class ManagerController {
                 }
             }
         }
+    
+        return pendingOfficers;
+    }
+    
+    public void viewPendingOfficerApplications(HDBManager manager) {
+        List<HDBOfficer> pendingOfficers = getPendingOfficerApplications(manager);
 
         if (pendingOfficers.isEmpty()) {
             System.out.println("No pending officer applications for your project.");
-        } else {
-            System.out.println("\n=== Pending Officer Applications ===");
-            for (HDBOfficer officer : pendingOfficers) {
-                System.out.println("- Name: " + officer.getName() + " | NRIC: " + officer.getNric());
-            }
-        }
+        } 
+
+        List<String> headers = List.of("Name", "NRIC", "Project Name", "Status");
+
+        List<List<String>> rows = pendingOfficers.stream().map(officer -> List.of(
+            officer.getName(),
+            officer.getNric(),
+            officer.getAssignedProject() != null ? manager.getAssignedProject() : "-",
+            "Pending"
+        )).toList();
+
+        TableUtil.printTable(headers, rows);
     }
 }

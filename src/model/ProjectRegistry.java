@@ -18,7 +18,12 @@ public class ProjectRegistry {
     }
 
     public static Project getProjectByName(String name) {
-        return projectMap.get(name);
+        for (Project p : projectMap.values()) {
+            if (p.getName().equalsIgnoreCase(name.trim())) {
+                return p;
+            }
+        }
+        return null;
     }
 
     public static List<Project> filterByVisibility(boolean visibleOnly) {
@@ -48,5 +53,14 @@ public class ProjectRegistry {
 
     public static boolean exists(String projectName) {
         return projectMap.containsKey(projectName);
+    }
+
+    public static String getNormalizedProjectName(String inputName) {
+        for (Project p : projectMap.values()) {
+            if (p.getName().equalsIgnoreCase(inputName.trim())) {
+                return p.getName(); // returns the correct canonical name (e.g., "Acacia Breeze")
+            }
+        }
+        return inputName; // fallback
     }
 }

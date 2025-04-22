@@ -1,5 +1,7 @@
 package controller;
 
+import java.util.Map;
+
 import model.*;
 
 public class OfficerController {
@@ -10,10 +12,14 @@ public class OfficerController {
     }
 
     public boolean reqToHandleProject(HDBOfficer officer, String projectName) {
-        // Check if officer already applied for the project
-        if (officer.hasActiveRegistration(projectName)) {
-            System.out.println("You already have an active registration for this project.");
-            return false;
+        projectName = ProjectRegistry.getNormalizedProjectName(projectName);
+        // Check if officer has ANY active registration (PENDING or APPROVED)
+        for (Map.Entry<String, HDBOfficer.RegistrationStatus> entry : officer.getAllRegistrations().entrySet()) {
+            HDBOfficer.RegistrationStatus status = entry.getValue();
+            if (status == HDBOfficer.RegistrationStatus.PENDING || status == HDBOfficer.RegistrationStatus.APPROVED) {
+                System.out.println("You have an active officer registration for project: " + entry.getKey());
+                return false;
+            }
         }
 
         // Check if officer applied to the project as an applicant
@@ -25,6 +31,13 @@ public class OfficerController {
         Project project = ProjectRegistry.getProjectByName(projectName);
         if (project == null) {
             System.out.println("Project not found.");
+            return false;
+        }
+
+        // Prevent duplicate re-application to same project if not rejected
+        HDBOfficer.RegistrationStatus current = officer.getRegistrationStatus(projectName);
+        if (current != null && current != HDBOfficer.RegistrationStatus.REJECTED) {
+            System.out.println("You have already applied to this project (status: " + current + ").");
             return false;
         }
 

@@ -1,10 +1,14 @@
 package view;
 
 import model.*;
+import util.Breadcrumb;
 import util.Filter;
+import util.InputUtil;
+import util.TableUtil;
 import controller.ApplicationController;
 import controller.OfficerController;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
@@ -17,6 +21,7 @@ public class ApplicationManagementCLI {
     private final HDBOfficer officer;
     private final String projectName;
     private final Scanner scanner = new Scanner(System.in);
+    private Breadcrumb breadcrumb;
 
     public ApplicationManagementCLI(HDBManager manager, ApplicationController applicationController, Map<String, Filter> userFilters) {
         this.manager = manager;
@@ -36,6 +41,10 @@ public class ApplicationManagementCLI {
         this.filter = null;
     }
 
+    public void setBreadcrumb(Breadcrumb breadcrumb) {
+        this.breadcrumb = breadcrumb;
+    }
+
     public void start() {
         if (officer != null) {
             officerManagement();
@@ -48,27 +57,26 @@ public class ApplicationManagementCLI {
         int choice;
         do {
             officerMenu();
-            choice = Integer.parseInt(scanner.nextLine());
+            choice = InputUtil.readInt(scanner);
 
             switch (choice) {
                 case 1 -> flatSelectionWorkflow();
                 case 2 -> generateReceipt();
-                case 3 -> System.out.println("Exiting Application Management.");
+                case 0 -> System.out.println("Exiting Application Management.");
                 default -> System.out.println("Invalid option. Please try again.");
             }
-        } while (choice != 3);
+        } while (choice != 0);
     }
 
     private void officerMenu() {
         System.out.println("\n======Application Management======");
         System.out.println("1. Flat Selection");
         System.out.println("2. Generate Booking Receipt");
-        System.out.println("3. Back");
-        System.out.print("Choice: ");
+        System.out.println("0. Back to Previous Menu");
     }
 
     private void flatSelectionWorkflow() {
-        List<Application> pending = applicationController.getPendingApplicationsByProject(projectName);
+        List<Application> pending = applicationController.getSuccessfulApplicationsByProject(projectName);
 
         if (pending.isEmpty()) {
             System.out.println("No successful applications pending for flat booking.");
@@ -77,7 +85,7 @@ public class ApplicationManagementCLI {
 
         System.out.println("\n=== Pending Applications ===");
         for (Application app : pending) {
-            System.out.println("- NRIC: " + app.getApplicant().getNric() + ", Flat Type: " + app.getFlatType());
+            System.out.println("- Name: "+ app.getApplicant().getName() + ", NRIC: " + app.getApplicant().getNric() + ", Flat Type: " + app.getFlatType());
         }
 
         System.out.print("\nProcess Application? (Y/N): ");
@@ -101,7 +109,7 @@ public class ApplicationManagementCLI {
             return;
         }      
 
-        System.out.print("Enter Applicant NRIC to generate receipt: (or exit)");
+        System.out.print("Enter Applicant NRIC to generate receipt (or exit): ");
         String applicantNric = scanner.nextLine().trim().toUpperCase();
 
         if (!applicantNric.equalsIgnoreCase("exit")) {
@@ -114,25 +122,24 @@ public class ApplicationManagementCLI {
         int choice; 
         do {
             printManagerMenu();
-            choice = Integer.parseInt(scanner.nextLine());
+            choice = InputUtil.readInt(scanner);
 
             switch (choice) {
                 case 1 -> processApplication();
                 case 2 -> approveWithdrawal();
                 case 3 -> generateReport();
-                case 4 -> System.out.println("Exiting Application Management.");
+                case 0 -> System.out.println("Exiting Application Management.");
                 default -> System.out.println("Invalid option. Please try again.");
             }
-        } while (choice != 4);
+        } while (choice != 0);
     }
 
     private void printManagerMenu() {
-        System.out.println("\n======Application Management======");
+        System.out.println("\n=== " + breadcrumb.getPath() + " ===");
         System.out.println("1. Approve/Reject BTO Application");
         System.out.println("2. Withdrawal Approval");
         System.out.println("3. Generate Booking Report");
-        System.out.println("4. Back");
-        System.out.print("Choice: ");
+        System.out.println("0. Back to Previous Menu");
     }
 
     private void processApplication() {
@@ -145,7 +152,7 @@ public class ApplicationManagementCLI {
 
         System.out.println("\n=== Pending Applications ===");
         for (Application app : pending) {
-            System.out.println("- NRIC: " + app.getApplicant().getNric() + ", Flat Type: " + app.getFlatType());
+            System.out.println("- Name: "+ app.getApplicant().getName() + ", NRIC: " + app.getApplicant().getNric() + ", Flat Type: " + app.getFlatType());
         }
 
         System.out.print("\nProcess Application? (Y/N): ");
@@ -174,7 +181,7 @@ public class ApplicationManagementCLI {
 
         System.out.println("\n=== Withdrawal Requests ===");
         for (Application app : requests) {
-            System.out.println("- NRIC: " + app.getApplicant().getNric() + ", Status: " + app.getStatus());
+            System.out.println("- Name: "+ app.getApplicant().getName() + ", NRIC: " + app.getApplicant().getNric() + ", Status: " + app.getStatus());
         }
 
         System.out.print("\nProcess Withdrawal? (Y/N): ");
@@ -199,12 +206,44 @@ public class ApplicationManagementCLI {
     }
 
     private void generateReport() {
-        collectApplicationFilterInput(); 
+        System.out.println("\n-------------------------");
+        System.out.println("Current Application Filters:");
+        System.out.println(" - Marital Status: " + (filter.getMaritalStatus() != null ? filter.getMaritalStatus() : "-"));
+        System.out.println(" - Flat Type: " + (filter.getFlatType() != null ? filter.getFlatType() : "-"));
+        System.out.println(" - Project Name: " + (filter.getProjectName() != null ? filter.getProjectName() : "-"));
+        System.out.println(" - Age Range: " +
+            (filter.getMinAge() != null ? filter.getMinAge() : "-") + " to " +
+            (filter.getMaxAge() != null ? filter.getMaxAge() : "-"));
+        System.out.println(" - Status: " + (filter.getStatus() != null ? filter.getStatus() : "-"));
+        System.out.println();
+
+        if (!filter.isEmpty()) {
+            clearFilters();
+        } else {
+            System.out.println("No filters applied. Would you like to add filters? (Y/N): ");
+            String response = scanner.nextLine().trim();
+
+            if (response.equalsIgnoreCase("y")) {
+                collectApplicationFilterInput();
+            }
+        }
+
         List<Application> result = applicationController.getFilteredApplications(filter);
 
         if (result.isEmpty()) {
-            System.out.println("No matching applications found.");
-            return;
+            if (filter.isEmpty()) {
+                System.out.println("No applications found.");
+                return;
+            }
+
+            System.out.print("No matching applications found. Clear filters and try again? (Y/N): ");
+            String retry = scanner.nextLine().trim().toLowerCase();
+            if (retry.equals("y")) {
+                filter.clear();
+                result = applicationController.getFilteredApplications(filter);
+            } else {
+                return;
+            }
         }
 
         printReport(result);
@@ -259,16 +298,36 @@ public class ApplicationManagementCLI {
     }
 
     private void printReport(List<Application> result) {
-        System.out.println("\n=== Filtered Application Report ===");
+       System.out.println("\n=== Filtered Application Report ===");
+
+        List<String> headers = List.of("Name", "NRIC", "Age", "Marital Status", "Flat Type", "Project", "Status");
+        List<List<String>> rows = new ArrayList<>();
+
         for (Application app : result) {
             Applicant a = app.getApplicant();
-            System.out.println("- Name: " + a.getName()
-                    + ", NRIC: " + a.getNric()
-                    + ", Age: " + a.getAge()
-                    + ", Marital Status: " + a.getMaritalStatus()
-                    + ", Flat Type: " + app.getFlatType()
-                    + ", Project: " + app.getProject().getName()
-                    + ", Status: " + app.getStatus());
+            rows.add(List.of(
+                a.getName(),
+                a.getNric(),
+                String.valueOf(a.getAge()),
+                a.getMaritalStatus(),
+                app.getFlatType(),
+                app.getProject().getName(),
+                app.getStatus().toString()
+            ));
+        }
+
+        TableUtil.printTable(headers, rows);
+    }
+
+    private void clearFilters() {
+        if (!filter.isEmpty()) {
+            System.out.print("Do you want to reset all filters? (Y/N): ");
+            String confirmation = scanner.nextLine().trim();
+            
+            if (confirmation.equalsIgnoreCase("y")) {
+                filter.clear();
+                System.out.println("Project filter cleared.");
+            }
         }
     }
 }

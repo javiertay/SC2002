@@ -121,24 +121,28 @@ public class Project implements Searchable{
             return false;
         }
 
-        if (filter.getFlatType() != null &&
-            !this.getFlatTypes().containsKey(filter.getFlatType())) {
-            return false;
+        if (filter.getFlatType() != null) {
+            boolean hasMatchingAndAvailableFlatType = flatTypes.entrySet().stream()
+                .anyMatch(entry ->
+                    entry.getKey().trim().equalsIgnoreCase(filter.getFlatType().trim()) &&
+                    entry.getValue().getRemainingUnits() > 0
+                );
+        
+            if (!hasMatchingAndAvailableFlatType) return false;
         }
 
-        // if (filter.getMinPrice() != null) {
-        //     FlatType flatType = this.getFlatTypes().get(filter.getFlatType());
-        //     if (flatType == null || flatType.getPrice() < filter.getMinPrice()) {
-        //         return false;
-        //     }
-        // }
-
-        // if (filter.getMaxPrice() != null) {
-        //     FlatType flatType = this.getFlatTypes().get(filter.getFlatType());
-        //     if (flatType == null || flatType.getPrice() > filter.getMaxPrice()) {
-        //         return false;
-        //     }
-        // }
+        if (filter.getMinPrice() != null || filter.getMaxPrice() != null) {
+            boolean hasMatchingFlat = false;
+            for (FlatType ft : this.getFlatTypes().values()) {
+                int price = ft.getPrice();
+                if ((filter.getMinPrice() == null || price >= filter.getMinPrice()) &&
+                    (filter.getMaxPrice() == null || price <= filter.getMaxPrice())) {
+                    hasMatchingFlat = true;
+                    break;
+                }
+            }
+            if (!hasMatchingFlat) return false;
+        }
 
         return true;
     }

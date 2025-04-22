@@ -24,6 +24,8 @@ public class EnquiryController {
         Enquiry enquiry = EnquiryRegistry.getById(enquiryId);
         if (enquiry == null) return false;
 
+        if (enquiry.hasReply() && !enquiry.getReply().isEmpty()) return false;
+
         String projectName = enquiry.getProjectName();
 
         if (user instanceof HDBOfficer officer) {
@@ -50,7 +52,12 @@ public class EnquiryController {
 
     public boolean updateEnquiry(int enquiryId, String newContent, String senderNRIC) {
         Enquiry enquiry = EnquiryRegistry.getById(enquiryId);
-        if (enquiry == null || !enquiry.getSenderNRIC().equals(senderNRIC)) {
+        if (enquiry == null) {
+            System.out.println("Enquiry not found.");
+            return false;
+        }
+
+        if (!enquiry.getSenderNRIC().equals(senderNRIC)) {
             System.out.println("You can only edit your own enquiries.");
             return false; // Not found or not the sender
         }
@@ -61,7 +68,7 @@ public class EnquiryController {
         }
 
         enquiry.setContent(newContent);
-        System.out.println("Enquiry updated successfully.");
+        System.out.println("Enquiry successfully updated.");
         return true;
     }
 
