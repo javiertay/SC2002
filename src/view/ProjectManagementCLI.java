@@ -292,7 +292,8 @@ public class ProjectManagementCLI {
             System.out.println("\n=== " + breadcrumb.getPath() + " ===");
             for (int i = 0; i < projects.size(); i++) {
                 Project p = projects.get(i);
-                String status = p.getOpenDate().isAfter(LocalDate.now())
+                String status = p.getCloseDate().isBefore(LocalDate.now()) ? "Closed" : 
+                        p.getOpenDate().isAfter(LocalDate.now())
                     ? "Upcoming: opens " + p.getOpenDate().format(formatter)
                     : "Open: " + p.getOpenDate().format(formatter) + " - " + p.getCloseDate().format(formatter);
                 System.out.println((i + 1) + ". " + p.getName() + " (" + status + ")");

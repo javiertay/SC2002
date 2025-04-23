@@ -9,6 +9,7 @@ import controller.ApplicationController;
 import controller.OfficerController;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
@@ -125,9 +126,10 @@ public class ApplicationManagementCLI {
             choice = InputUtil.readInt(scanner);
 
             switch (choice) {
-                case 1 -> processApplication();
-                case 2 -> approveWithdrawal();
-                case 3 -> generateReport();
+                case 1 -> viewAllApplicationsForProject();
+                case 2 -> processApplication();
+                case 3 -> approveWithdrawal();
+                case 4 -> generateReport();
                 case 0 -> System.out.println("Exiting Application Management.");
                 default -> System.out.println("Invalid option. Please try again.");
             }
@@ -136,13 +138,39 @@ public class ApplicationManagementCLI {
 
     private void printManagerMenu() {
         System.out.println("\n=== " + breadcrumb.getPath() + " ===");
-        System.out.println("1. Approve/Reject BTO Application");
-        System.out.println("2. Withdrawal Approval");
-        System.out.println("3. Generate Booking Report");
+        System.out.println("1. View all Applications for your Project");
+        System.out.println("2. Approve/Reject BTO Application");
+        System.out.println("3. Withdrawal Approval");
+        System.out.println("4. Generate Booking Report");
         System.out.println("0. Back to Previous Menu");
     }
 
-    private void processApplication() {
+    private void viewAllApplicationsForProject() {
+        String projectName = manager.getAssignedProject();
+        List<Application> apps = applicationController.getApplicationsByProject(projectName);
+    
+        if (apps.isEmpty()) {
+            System.out.println("No applications found for your project.");
+            return;
+        }
+    
+        List<String> headers = List.of("Applicant", "NRIC", "Age", "Project", "Flat Type", "Status");
+        List<List<String>> rows = apps.stream().map(app -> {
+            Applicant a = app.getApplicant();
+            return List.of(
+                a.getName(),
+                a.getNric(),
+                String.valueOf(a.getAge()),
+                app.getProject().getName(),
+                app.getFlatType(),
+                app.getStatus().toString()
+            );
+        }).toList();
+        rows.sort(Comparator.comparing((List<String> row) -> row.get(3)).thenComparing(row -> row.get(0)));
+        TableUtil.printTable(headers, rows);
+    }    
+
+    private void processApplication() {   
         List<Application> pending = applicationController.getPendingApplicationsByProject(projectName);
 
         if (pending.isEmpty()) {
@@ -197,9 +225,9 @@ public class ApplicationManagementCLI {
         String decision = scanner.nextLine().trim().toUpperCase();
 
         if (decision.equals("A")) {
-            applicationController.approveWithdrawal(nric);
+            applicationController.approveWithdrawal(manager, nric);
         } else if (decision.equals("R")) {
-            applicationController.rejectWithdrawal(nric);
+            applicationController.rejectWithdrawal(manager, nric);
         } else {
             System.out.println("Invalid decision. Returning to menu.");
         }
@@ -315,7 +343,7 @@ public class ApplicationManagementCLI {
                 app.getStatus().toString()
             ));
         }
-
+        rows.sort(Comparator.comparing(row -> row.get(0)));
         TableUtil.printTable(headers, rows);
     }
 

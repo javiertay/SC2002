@@ -96,7 +96,7 @@ public class ExcelWriter {
             header.createCell(7).setCellValue("Application Status");
     
             int rowNum = 1;
-            for (Application app : ApplicationRegistry.getAllApplications().values()) {
+            for (Application app : ApplicationRegistry.getAllApplications().values().stream().flatMap(List::stream).toList()) {
                 Row row = sheet.createRow(rowNum++);
                 row.createCell(0).setCellValue(app.getApplicant().getName());
                 row.createCell(1).setCellValue(app.getApplicant().getNric());

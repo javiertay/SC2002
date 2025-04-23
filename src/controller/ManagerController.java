@@ -86,7 +86,7 @@ public class ManagerController {
                 rows.add(row);
             }
         }
-
+        rows.sort(Comparator.comparing(row -> row.get(0)));
         TableUtil.printTable(headers, rows);
     }
 
@@ -285,19 +285,15 @@ public class ManagerController {
     public void viewPendingOfficerApplications(HDBManager manager) {
         List<HDBOfficer> pendingOfficers = getPendingOfficerApplications(manager);
 
-        if (pendingOfficers.isEmpty()) {
-            System.out.println("No pending officer applications for your project.");
-        } 
-
         List<String> headers = List.of("Name", "NRIC", "Project Name", "Status");
-
+    
         List<List<String>> rows = pendingOfficers.stream().map(officer -> List.of(
             officer.getName(),
             officer.getNric(),
             officer.getAssignedProject() != null ? manager.getAssignedProject() : "-",
             "Pending"
         )).toList();
-
+        rows.sort(Comparator.comparing(row -> row.get(0)));
         TableUtil.printTable(headers, rows);
     }
 }

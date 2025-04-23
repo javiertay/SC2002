@@ -74,7 +74,6 @@ public class TableUtil {
             } else if (input.equalsIgnoreCase("p") && currentPage > 0) {
                 currentPage--;
             } else if (input.equalsIgnoreCase("q")) {
-                scanner.close();
                 break;
             } else {
                 System.out.println("Invalid option.");
@@ -128,7 +127,7 @@ public class TableUtil {
                 color + status + reset
             ));
         }
-
+        rows.sort(Comparator.comparing(row -> row.get(0)));
         printTable(headers, rows); // Assuming this is your generic method
     }
 
@@ -162,7 +161,7 @@ public class TableUtil {
                 repliedBy
             ));
         }
-
+        rows.sort(Comparator.comparing(row -> row.get(0)));
         TableUtil.printTable(headers, rows);
     }
 }

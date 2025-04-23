@@ -73,23 +73,30 @@ public class ManagerCLI {
 
     private void approveOfficerRegistration() {
         // managerController.getAllOfficersByStatus();
-        while (true) {
-            managerController.viewPendingOfficerApplications(manager); // returns pending officer application by the manager project
-    
-            System.out.print("Enter Officer NRIC to process (or 'back' to return): ");
-            String nric = scanner.nextLine().trim().toUpperCase();
-    
-            if (nric.equalsIgnoreCase("back") || nric.isEmpty()) return;
-    
-            System.out.print("Approve or Reject? (A/R): ");
-            String decision = scanner.nextLine().trim().toUpperCase();
-    
-            if (decision.equals("A")) {
-                managerController.processOfficerApplication(manager, nric, HDBOfficer.RegistrationStatus.APPROVED);
-            } else if (decision.equals("R")) {
-                managerController.processOfficerApplication(manager, nric, HDBOfficer.RegistrationStatus.REJECTED);
-            } else {
-                System.out.println("Invalid decision. Returning to menu.");
+        List<HDBOfficer> pendingOfficers = managerController.getPendingOfficerApplications(manager);
+
+        if (pendingOfficers.isEmpty()) {
+            System.out.println("No pending officer applications for your project.");
+        } else {
+
+            while (true) {
+                managerController.viewPendingOfficerApplications(manager); // returns pending officer application by the manager project
+        
+                System.out.print("Enter Officer NRIC to process (or 'back' to return): ");
+                String nric = scanner.nextLine().trim().toUpperCase();
+        
+                if (nric.equalsIgnoreCase("back") || nric.isEmpty()) return;
+        
+                System.out.print("Approve or Reject? (A/R): ");
+                String decision = scanner.nextLine().trim().toUpperCase();
+        
+                if (decision.equals("A")) {
+                    managerController.processOfficerApplication(manager, nric, HDBOfficer.RegistrationStatus.APPROVED);
+                } else if (decision.equals("R")) {
+                    managerController.processOfficerApplication(manager, nric, HDBOfficer.RegistrationStatus.REJECTED);
+                } else {
+                    System.out.println("Invalid decision. Returning to menu.");
+                }
             }
         }
     }
@@ -105,6 +112,9 @@ public class ManagerCLI {
         List<Application> applications = ApplicationRegistry.getPendingApplicationsByProject(manager.getAssignedProject());
         int pendingAppCount = applications.size();
 
+        List<Application> withdrawalRequests = ApplicationRegistry.getWithdrawalRequestsByProject(manager.getAssignedProject());
+        int pendingWithdrawals = withdrawalRequests.size();
+
         List<HDBOfficer> officers = managerController.getPendingOfficerApplications(manager);
         int pendingOfficerApprovalCount = officers.size();
 
@@ -112,7 +122,8 @@ public class ManagerCLI {
         int totalEnquiries = enquiries.size();
 
         System.out.println("\nWelcome back " + manager.getName() + "!");
-        System.out.println(" - " + pendingAppCount + " applications pending for your review.");
+        System.out.println(" - " + pendingAppCount + " application(s) pending approval");
+        System.out.println(" - " + pendingWithdrawals + " withdrawal request(s) awaiting your decision");
         System.out.println(" - " + pendingOfficerApprovalCount + " officer(s) pending approval for your project");
         System.out.println(" - " + totalEnquiries + " enquiries for your project");
     }

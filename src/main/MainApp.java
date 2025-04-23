@@ -67,7 +67,7 @@ public class MainApp {
     }
 
     private static boolean loadData(AuthController authController, String path) {
-        ExcelReader.ExcelData data = ExcelReader.loadAllData(path, authController);
+        ExcelReader.ExcelData data = ExcelReader.loadAllData(path);
         if (data == null) {
             System.out.println("Failed to load data from Excel file. Exiting...");
             return false;
@@ -78,18 +78,9 @@ public class MainApp {
         EnquiryRegistry.loadEnquiries(data.enquiries);
         ApplicationRegistry.loadApplications(data.applications);
 
-        // Assign officers to projects
-        for (HDBOfficer officer : data.officers) {
-            for (Project project : data.projects) {
-                if (project.getOfficerList().contains(officer.getName())) {
-                    officer.assignToProject(project.getName());
-                    officer.setRegistrationStatus(project.getName(), HDBOfficer.RegistrationStatus.APPROVED);
-                }
-            }
-        }
-
         // Assign managers to projects
         for (HDBManager manager : data.managers) {
+            authController.addUser(manager);
             Project selectedProject = null;
             LocalDate today = LocalDate.now();
             LocalDate earliestFutureDate = LocalDate.MAX;
@@ -119,6 +110,7 @@ public class MainApp {
             }
         }
 
+        // auto set project visibility to off if passed closed date
         for (Project project : data.projects) {
             LocalDate today = LocalDate.now();
 
@@ -127,44 +119,16 @@ public class MainApp {
             }
 
             for (HDBOfficer officer : data.officers) {
+                authController.addUser(officer);
                 if (project.getOfficerList().contains(officer.getName())) {
                     officer.assignToProject(project.getName());
                     officer.setRegistrationStatus(project.getName(), HDBOfficer.RegistrationStatus.APPROVED);
-                }
-            }
-
-            for (HDBManager manager : data.managers) {
-                Project selectedProject = null;
-                LocalDate earliestFutureDate = LocalDate.MAX;
-
-                if (!project.getManagerName().equalsIgnoreCase(manager.getName())) continue; // Only consider projects assigned to this manager
-
-                LocalDate openDate = project.getOpenDate();
-                LocalDate closeDate = project.getCloseDate();
-
-                // Check if the project is currently open
-                if ((openDate.isBefore(today) || openDate.isEqual(today))
-                        && (closeDate.isAfter(today) || closeDate.isEqual(today))) {
-                    selectedProject = project;
-                    break;
-                }
-
-                // If no current project, find the earliest future project
-                if (openDate.isAfter(today) && openDate.isBefore(earliestFutureDate)) {
-                    selectedProject = project;
-                    earliestFutureDate = openDate;
-                }
-
-                if (selectedProject != null) {
-                    manager.assignToProject(selectedProject.getName());
                 }
             }
         }
 
         // Register users
         for (Applicant a : data.applicants) authController.addUser(a);
-        for (HDBOfficer o : data.officers) authController.addUser(o);
-        for (HDBManager m : data.managers) authController.addUser(m);
 
         return true;
     }

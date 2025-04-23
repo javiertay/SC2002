@@ -159,7 +159,7 @@ public class ApplicationCLI {
         }
 
         boolean success = applicationController.submitApplication(applicant, projectName, flatType);
-        System.out.println(success ? "Application process completed successfully!" : "Application failed. Please try again.");
+        System.out.println(success ? "Application process submitted! Pending Approval." : "Application failed. Please try again.");
     }
 
     private void viewApplicationStatus(Applicant applicant) {

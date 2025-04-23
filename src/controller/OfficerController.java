@@ -1,5 +1,6 @@
 package controller;
 
+import java.time.LocalDate;
 import java.util.Map;
 
 import model.*;
@@ -17,8 +18,13 @@ public class OfficerController {
         for (Map.Entry<String, HDBOfficer.RegistrationStatus> entry : officer.getAllRegistrations().entrySet()) {
             HDBOfficer.RegistrationStatus status = entry.getValue();
             if (status == HDBOfficer.RegistrationStatus.PENDING || status == HDBOfficer.RegistrationStatus.APPROVED) {
-                System.out.println("You have an active officer registration for project: " + entry.getKey());
-                return false;
+                Project registeredProject = ProjectRegistry.getProjectByName(officer.getAssignedProject());
+        
+                // If the project is still ongoing, block new registration
+                if (registeredProject != null && LocalDate.now().isBefore(registeredProject.getCloseDate())) {
+                    System.out.println("You have an active officer registration for project: " + officer.getAssignedProject());
+                    return false;
+                }
             }
         }
 
@@ -36,7 +42,7 @@ public class OfficerController {
 
         // Prevent duplicate re-application to same project if not rejected
         HDBOfficer.RegistrationStatus current = officer.getRegistrationStatus(projectName);
-        if (current != null && current != HDBOfficer.RegistrationStatus.REJECTED) {
+        if (current == HDBOfficer.RegistrationStatus.PENDING || current == HDBOfficer.RegistrationStatus.APPROVED) {
             System.out.println("You have already applied to this project (status: " + current + ").");
             return false;
         }
@@ -65,7 +71,7 @@ public class OfficerController {
 
     // Generate flat booking receipt
     public void generateReceipt(HDBOfficer officer, String applicantNric) {
-        Application application = ApplicationRegistry.getApplicationByNRIC(applicantNric);
+        Application application = ApplicationRegistry.getApplicationByNricAndProject(applicantNric, officer.getAssignedProject());
     
         if (application == null) {
             System.out.println("No application found for this NRIC.");

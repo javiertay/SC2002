@@ -9,6 +9,7 @@ import model.HDBOfficer.RegistrationStatus;
 import util.Breadcrumb;
 import util.InputUtil;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
@@ -148,7 +149,43 @@ public class OfficerCLI {
 
     private void showDashboard() {
         System.out.println("\nWelcome back " + officer.getName() + "!");
+
+        List<Application> app = ApplicationRegistry.getApplicationByNRIC(officer.getNric());
+        if (app == null || app.isEmpty()) {
+            System.out.println(" - You have not applied for any BTO projects yet.");
+        } else {
+            Application appToShow = app.size() == 1 ? app.get(0) : app.get(app.size() - 1);
+            System.out.println(" - Your application for: " + appToShow.getProject().getName() + " is " + appToShow.getStatus());
+        }
+
+        List<Enquiry> enq = EnquiryRegistry.getEnquiriesByUser(officer.getNric());
+        if (enq.isEmpty()){
+            System.out.println(" - You have not made any enquiries for any BTO projects.");
+        } else {
+            long withReplies = enq.stream().filter(e -> e.getReply() != null).count();
     
+            if (withReplies == 0) {
+                System.out.println(" - You have no replies to your enquiries yet.");
+            } else {
+                System.out.println(" - Your enquiry has been replied to!");
+            }
+        }
+
+        LocalDate today = LocalDate.now();
+        long open = ProjectRegistry.getAllProjects().stream()
+            .filter(p -> p.isVisible() &&
+                        !p.getOpenDate().isAfter(today) &&
+                        !p.getCloseDate().isBefore(today))
+            .count();
+
+        long upcoming = ProjectRegistry.getAllProjects().stream()
+            .filter(p -> p.isVisible() && p.getOpenDate().isAfter(today))
+            .count();
+
+        System.out.println(" - " + open + " Projects currently open. " + upcoming + " more upcoming soon!");
+
+        // ====== officer dashboard=====
+        System.out.println();    
         String assignedProject = officer.getAssignedProject();
         if (assignedProject == null) {
             System.out.println(" - You are not currently assigned to any project.");

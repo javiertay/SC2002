@@ -75,11 +75,12 @@ public class ApplicantCLI {
     private void showDashboard() {
         System.out.println("\nWelcome back " + applicant.getName() + "!");
 
-        Application applications = ApplicationRegistry.getApplicationByNRIC(applicant.getNric());
-        if (applications == null) {
-            System.out.println(" - You have not applied for any projects.");
+        List<Application> applications = ApplicationRegistry.getApplicationByNRIC(applicant.getNric());
+        if (applications == null || applications.isEmpty()) {
+            System.out.println(" - You have not applied for any BTO projects yet.");
         } else {
-            System.out.println(" - Your application for: " + applications.getProject().getName() + " is " + applications.getStatus());
+            Application appToShow = applications.size() == 1 ? applications.get(0) : applications.get(applications.size() - 1);
+            System.out.println(" - Your application for: " + appToShow.getProject().getName() + " is " + appToShow.getStatus());
         }
 
         List<Enquiry> enquiries = EnquiryRegistry.getEnquiriesByUser(applicant.getNric());

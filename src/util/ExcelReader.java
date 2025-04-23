@@ -5,8 +5,6 @@ import model.*;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
-import controller.AuthController;
-
 import java.io.*;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -35,7 +33,7 @@ public class ExcelReader {
         }
     }
 
-    public static ExcelData loadAllData(String filePath, AuthController authController) {
+    public static ExcelData loadAllData(String filePath) {
         try (FileInputStream fis = new FileInputStream(filePath);
              Workbook workbook = new XSSFWorkbook(fis)) {
 
@@ -50,7 +48,7 @@ public class ExcelReader {
             List<HDBOfficer> officers = loadOfficers(officerSheet);
             List<HDBManager> managers = loadManagers(managerSheet);
             List<Project> projects = loadProjects(projectSheet);
-            List<Application> applicationsList = loadApplications(applications, authController);
+            List<Application> applicationsList = loadApplications(applications, applicants, officers, projects);
             List<Enquiry> enquiries = loadEnquiries(enquries);
 
             return new ExcelData(applicants, officers, managers, projects, applicationsList, enquiries);
@@ -188,11 +186,20 @@ public class ExcelReader {
     }
 
     // load applications
-    public static List<Application> loadApplications(Sheet sheet, AuthController authController) {
+    public static List<Application> loadApplications(Sheet sheet, List<Applicant> applicants, List<HDBOfficer> officers, List<Project> projects) {
         if (sheet == null) {
             System.out.println("Application sheet not found in Excel. Skipping.");
             return Collections.emptyList();
         }
+
+        // load all valid applicants
+        Map<String, Applicant> applicantMap = new HashMap<>();
+        for (Applicant a : applicants) applicantMap.put(a.getNric().toUpperCase(), a);
+        for (HDBOfficer o : officers) applicantMap.put(o.getNric().toUpperCase(), o); 
+
+        // load valid projects
+        Map<String, Project> projectMap = new HashMap<>();
+        for (Project p : projects) projectMap.put(p.getName().toLowerCase(), p);
 
         List<Application> applications = new ArrayList<>();
 
@@ -200,7 +207,7 @@ public class ExcelReader {
             if (row.getRowNum() == 0) continue; // Skip header
 
             // String name = row.getCell(0).getStringCellValue();
-            String nric = row.getCell(1).getStringCellValue();
+            String nric = row.getCell(1).getStringCellValue().toUpperCase();
             // int age = getSafeNumericCellValue((row.getCell(2)));
             // String maritalStatus = row.getCell(3).getStringCellValue();
             String flatType = row.getCell(4).getStringCellValue();
@@ -208,13 +215,15 @@ public class ExcelReader {
             LocalDate applicationDate = row.getCell(6).getDateCellValue().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
             String statusString = row.getCell(7).getStringCellValue();
 
+
             // validate objects before creation
-            User user = authController.getUserByNRIC(nric);
-            if (!(user instanceof Applicant applicant)) {
+            Applicant applicant = applicantMap.get(nric);
+            if (applicant == null) {
+                System.out.println("Skipping NRIC " + nric + ": Not a valid applicant or officer.");
                 continue;
             }
 
-            Project project = ProjectRegistry.getProjectByName(projectName);
+            Project project = projectMap.get(projectName.toLowerCase());
             if (project == null) {
                 System.out.println("Project " + projectName + " not found. Skipping application.");
                 continue;
@@ -226,7 +235,6 @@ public class ExcelReader {
 
             applications.add(application);
         }
-
         return applications;
     }
     

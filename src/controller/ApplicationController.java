@@ -3,6 +3,9 @@ package controller;
 import model.*;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
@@ -30,8 +33,8 @@ public class ApplicationController {
     public boolean submitApplication(Applicant applicant, String projectName, String flatType) {
         LocalDate today = LocalDate.now();
 
-        if (ApplicationRegistry.hasApplication(applicant.getNric())) {
-            System.out.println("You already have an active application.");
+        if (ApplicationRegistry.hasActiveApplication(applicant.getNric())) {
+            System.out.println("You already have an active application. Withdraw or wait for rejection to reapply.");
             return false;
         }
 
@@ -85,22 +88,61 @@ public class ApplicationController {
 
     // View current application
     public void viewApplicationStatus(Applicant applicant) {
-        Application application = ApplicationRegistry.getApplicationByNRIC(applicant.getNric());
-        if (application == null) {
+        List<Application> applications = ApplicationRegistry.getApplicationByNRIC(applicant.getNric());
+        if (applications == null || applications.isEmpty()) {
             System.out.println("You have not applied for any project.");
         } else {
-            System.out.println(application.toString());
+            List<String> headers = List.of("Name", "Location", "Open Date", "Close Date","Flat Type", "Project Status", "Booking Status");
+
+            List<List<String>> rows = new ArrayList<>();
+            LocalDate today = LocalDate.now();
+
+            for (Application application : applications) {
+                Project project = application.getProject();
+
+                String status = (today.isAfter(project.getCloseDate()) || !project.isVisible()) 
+                                ? "Closed" 
+                                : "Open";
+
+                rows.add(List.of(
+                    project.getName(),
+                    project.getNeighborhood(),
+                    project.getOpenDate().format(DateTimeFormatter.ofPattern("d/M/yyyy")),
+                    project.getCloseDate().format(DateTimeFormatter.ofPattern("d/M/yyyy")),
+                    application.getFlatType(),
+                    status,
+                    application.getStatus().toString()
+                ));
+            }
+            rows.sort(Comparator.comparing(row -> row.get(0)));
+            TableUtil.printTable(headers, rows);
         }
     }
 
     // Withdraw application
     public boolean reqToWithdrawApp(Applicant applicant) {
-        Application application = ApplicationRegistry.getApplicationByNRIC(applicant.getNric());
-        if (application == null) {
+        List<Application> applications = ApplicationRegistry.getApplicationByNRIC(applicant.getNric());
+    
+        if (applications == null || applications.isEmpty()) {
             System.out.println("No application found to withdraw.");
             return false;
         }
-        
+    
+        // Find the latest non-withdrawn application
+        Application application = null;
+        for (int i = applications.size() - 1; i >= 0; i--) {
+            Application app = applications.get(i);
+            if (app.getStatus() != Application.Status.WITHDRAWN) {
+                application = app;
+                break;
+            }
+        }
+    
+        if (application == null) {
+            System.out.println("You have no active application to withdraw.");
+            return false;
+        }
+    
         if (application.getStatus() == Application.Status.WITHDRAWN) {
             System.out.println("Application is already withdrawn.");
             return false;
@@ -115,13 +157,13 @@ public class ApplicationController {
         System.out.println("Withdrawal request submitted. Waiting for manager approval.");
         return true;
     }
-
+    
     //
-    public Application getApplicationByNRIC(String nric) {
+    public List<Application> getApplicationByNRIC(String nric) {
         return ApplicationRegistry.getApplicationByNRIC(nric);
     }
 
-    public Map<String, Application> getAllApplications() {
+    public Map<String, List<Application>> getAllApplications() {
         return ApplicationRegistry.getAllApplications();
     }
 
@@ -161,50 +203,89 @@ public class ApplicationController {
         return ApplicationRegistry.getPendingApplicationsByProject(projectName);
     }
 
-    public boolean approveWithdrawal(String nric) {
-        Application app = ApplicationRegistry.getApplicationByNRIC(nric);
+    public List<Application> getApplicationsByProject(String projectName) {
+        return ApplicationRegistry.getAllApplications().values().stream()
+            .flatMap(List::stream)
+            .filter(app -> app.getProject().getName().equalsIgnoreCase(projectName.trim()))
+            .toList();
+    }    
 
-        if (app == null || !app.isWithdrawalRequested()) {
-            System.out.println("No withdrawal request found for this applicant.");
+    public boolean approveWithdrawal(HDBManager manager, String nric) {
+        String assignedProject = manager.getAssignedProject();
+    
+        List<Application> apps = ApplicationRegistry.getApplicationByNRIC(nric);
+        if (apps == null || apps.isEmpty()) {
+            System.out.println("No applications found for this applicant.");
             return false;
         }
-
+    
+        // Find the relevant withdrawal request for manager's assigned project
+        Application app = apps.stream()
+            .filter(a -> a.getProject().getName().equalsIgnoreCase(assignedProject))
+            .filter(Application::isWithdrawalRequested)
+            .findFirst()
+            .orElse(null);
+    
+        if (app == null) {
+            System.out.println("No withdrawal request found for this applicant under your project.");
+            return false;
+        }
+    
         // If BOOKED, return the flat unit
         if (app.getStatus() == Application.Status.BOOKED) {
             String flatType = app.getFlatType();
             Project project = app.getProject();
             FlatType ft = project.getFlatTypes().get(flatType);
-
             if (ft != null) {
                 ft.cancelBooking();
             }
         }
-
+    
         app.setStatus(Application.Status.WITHDRAWN);
         app.setWithdrawalRequested(false); // clear the request
         System.out.println("Application withdrawn successfully.");
         return true;
     }
+    
 
-    public boolean rejectWithdrawal(String nric) {
-        Application app = ApplicationRegistry.getApplicationByNRIC(nric);
-
-        if (app == null || !app.isWithdrawalRequested()) {
-            System.out.println("No withdrawal request found for this applicant.");
+    public boolean rejectWithdrawal(HDBManager manager, String nric) {
+        String assignedProject = manager.getAssignedProject();
+    
+        List<Application> apps = ApplicationRegistry.getApplicationByNRIC(nric);
+        if (apps == null || apps.isEmpty()) {
+            System.out.println("No applications found for this applicant.");
             return false;
         }
-
+    
+        // Look for a withdrawal request for the manager's assigned project
+        Application app = apps.stream()
+            .filter(a -> a.getProject().getName().equalsIgnoreCase(assignedProject))
+            .filter(Application::isWithdrawalRequested)
+            .findFirst()
+            .orElse(null);
+    
+        if (app == null) {
+            System.out.println("No withdrawal request found for this applicant under your project.");
+            return false;
+        }
+    
         app.setWithdrawalRequested(false); // clear the request
         System.out.println("Withdrawal request rejected.");
         return true;
     }
+    
 
     public List<Application> getPendingWithdrawal (String projectName) {
         return ApplicationRegistry.getWithdrawalRequestsByProject(projectName);
     }
 
     public List<Application> getFilteredApplications(Filter filter) {
-        return FilterUtil.applyFilter(ApplicationRegistry.getAllApplications().values(), filter);
+        List<Application> allApps = ApplicationRegistry.getAllApplications()
+        .values().stream()
+        .flatMap(List::stream)
+        .toList();
+
+        return FilterUtil.applyFilter(allApps, filter);
     }
     
     // ====== HDB Officer Functions ======
