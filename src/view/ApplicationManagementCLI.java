@@ -291,9 +291,6 @@ public class ApplicationManagementCLI {
         String flatType = scanner.nextLine().trim();
         filter.setFlatType(flatType.isEmpty() ? null : flatType);
 
-        // System.out.print("Filter by Project Name (leave blank to skip): ");
-        // String projectName = scanner.nextLine().trim();
-        // filter.setProjectName(projectName.isEmpty() ? null : projectName);
         System.out.print("Filter by Project Name (comma-separated, leave blank to skip): ");
         String projectName = scanner.nextLine().trim();
         if (!projectName.isEmpty()) {
@@ -329,12 +326,6 @@ public class ApplicationManagementCLI {
         System.out.println("Statuses: PENDING, SUCCESSFUL, BOOKED, UNSUCCESSFUL, WITHDRAWN");
         System.out.print("Filter by Application Status (leave blank to skip): ");
         String statusInput = scanner.nextLine().trim().toUpperCase();
-        // try {
-        //     filter.setStatus(statusInput.isEmpty() ? null : Application.Status.valueOf(statusInput));
-        // } catch (IllegalArgumentException e) {
-        //     System.out.println("Invalid status entered. Skipping.");
-        //     filter.setStatus(null);
-        // }
         if (!statusInput.isEmpty()) {
             try {
                 Set<Application.Status> statuses = Arrays.stream(statusInput.split(","))

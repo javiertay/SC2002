@@ -298,7 +298,7 @@ public class ProjectManagementCLI {
                     : "Open: " + p.getOpenDate().format(formatter) + " - " + p.getCloseDate().format(formatter);
                 System.out.println((i + 1) + ". " + p.getName() + " (" + status + ")");
             }
-            System.out.println((projects.size() + 1) + ". Back");
+            System.out.println("0. Back");
             System.out.print("\nSelect a project to manage: ");
     
             String input = scanner.nextLine().trim();
@@ -310,8 +310,8 @@ public class ProjectManagementCLI {
                 continue;
             }
     
-            if (choice == projects.size() + 1) return;
-    
+            if (choice == 0) return;
+            
             if (choice >= 1 && choice <= projects.size()) {
                 Project selected = projects.get(choice - 1);
                 manageProject(selected);
