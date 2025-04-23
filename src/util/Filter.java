@@ -1,20 +1,22 @@
 package util;
 
+import java.util.Set;
+
 import model.Application;
 
 public class Filter {
     // Filters for projects listing
     private String flatType;
-    private String neighbourhood;
+    private Set<String> neighbourhood;
     private Integer minPrice;
     private Integer maxPrice;
 
     // Additional filters for applications listing
-    private String projectName;
+    private Set<String> projectName;
     private String maritalStatus;
     private Integer minAge;
     private Integer maxAge;
-    private Application.Status status;
+    private Set<Application.Status> status;
 
     public String getFlatType() {
         return flatType;
@@ -24,27 +26,27 @@ public class Filter {
         this.flatType = flatType;
     }
 
-    public String getNeighbourhood() {
+    public Set<String> getNeighbourhood() {
         return neighbourhood;
     }
 
-    public void setNeighbourhood(String neighbourhood) {
+    public void setNeighbourhood(Set<String> neighbourhood) {
         this.neighbourhood = neighbourhood;
     }
 
-    public String getProjectName() {
+    public Set<String> getProjectName() {
         return projectName;
     }
 
-    public void setProjectName(String projectName) {
+    public void setProjectName(Set<String> projectName) {
         this.projectName = projectName;
     }
 
-    public Application.Status getStatus() {
+    public Set<Application.Status> getStatus() {
         return status;
     }
 
-    public void setStatus(Application.Status status) {
+    public void setStatus(Set<Application.Status> status) {
         this.status = status;
     }
 

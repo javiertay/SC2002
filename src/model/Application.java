@@ -85,12 +85,13 @@ public class Application implements Searchable{
         }
 
         if (filter.getProjectName() != null &&
-            !this.getProject().getName().equalsIgnoreCase(filter.getProjectName())) {
+            filter.getProjectName().stream().noneMatch(
+                n -> n.equalsIgnoreCase(this.getProject().getName()))) {
             return false;
         }
+        
 
-        if (filter.getStatus() != null &&
-            this.getStatus() != filter.getStatus()) {
+        if (filter.getStatus() != null && !filter.getStatus().contains(this.getStatus())) {
             return false;
         }
 

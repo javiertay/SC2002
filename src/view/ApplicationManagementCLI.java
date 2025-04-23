@@ -9,10 +9,13 @@ import controller.ApplicationController;
 import controller.OfficerController;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class ApplicationManagementCLI {
     private final Filter filter;
@@ -155,7 +158,7 @@ public class ApplicationManagementCLI {
         }
     
         List<String> headers = List.of("Applicant", "NRIC", "Age", "Project", "Flat Type", "Status");
-        List<List<String>> rows = apps.stream().map(app -> {
+        List<List<String>> rows = new ArrayList<>(apps.stream().map(app -> {
             Applicant a = app.getApplicant();
             return List.of(
                 a.getName(),
@@ -165,7 +168,7 @@ public class ApplicationManagementCLI {
                 app.getFlatType(),
                 app.getStatus().toString()
             );
-        }).toList();
+        }).toList());
         rows.sort(Comparator.comparing((List<String> row) -> row.get(3)).thenComparing(row -> row.get(0)));
         TableUtil.printTable(headers, rows);
     }    
@@ -288,9 +291,20 @@ public class ApplicationManagementCLI {
         String flatType = scanner.nextLine().trim();
         filter.setFlatType(flatType.isEmpty() ? null : flatType);
 
-        System.out.print("Filter by Project Name (leave blank to skip): ");
+        // System.out.print("Filter by Project Name (leave blank to skip): ");
+        // String projectName = scanner.nextLine().trim();
+        // filter.setProjectName(projectName.isEmpty() ? null : projectName);
+        System.out.print("Filter by Project Name (comma-separated, leave blank to skip): ");
         String projectName = scanner.nextLine().trim();
-        filter.setProjectName(projectName.isEmpty() ? null : projectName);
+        if (!projectName.isEmpty()) {
+            Set<String> projectNames = Arrays.stream(projectName.split(","))
+                .map(String::trim)
+                .map(String::toLowerCase) // normalize
+                .collect(Collectors.toSet());
+            filter.setProjectName(projectNames);
+        } else {
+            filter.setProjectName(null);
+        }
 
         System.out.print("Filter by Minimum Age (leave blank to skip): ");
         String minAgeStr = scanner.nextLine().trim();
@@ -315,11 +329,24 @@ public class ApplicationManagementCLI {
         System.out.println("Statuses: PENDING, SUCCESSFUL, BOOKED, UNSUCCESSFUL, WITHDRAWN");
         System.out.print("Filter by Application Status (leave blank to skip): ");
         String statusInput = scanner.nextLine().trim().toUpperCase();
-        try {
-            filter.setStatus(statusInput.isEmpty() ? null : Application.Status.valueOf(statusInput));
-        } catch (IllegalArgumentException e) {
-            System.out.println("Invalid status entered. Skipping.");
-            filter.setStatus(null);
+        // try {
+        //     filter.setStatus(statusInput.isEmpty() ? null : Application.Status.valueOf(statusInput));
+        // } catch (IllegalArgumentException e) {
+        //     System.out.println("Invalid status entered. Skipping.");
+        //     filter.setStatus(null);
+        // }
+        if (!statusInput.isEmpty()) {
+            try {
+                Set<Application.Status> statuses = Arrays.stream(statusInput.split(","))
+                    .map(String::trim)
+                    .map(String::toUpperCase)
+                    .map(Application.Status::valueOf)
+                    .collect(Collectors.toSet());
+                filter.setStatus(statuses);
+            } catch (IllegalArgumentException e) {
+                System.out.println("One or more invalid statuses entered. Skipping status filter.");
+                filter.setStatus(null);
+            }
         }
 
         System.out.println("Application filters updated.");

@@ -117,7 +117,8 @@ public class Project implements Searchable{
     @Override
     public boolean matches(Filter filter) {
         if (filter.getNeighbourhood() != null &&
-            !this.getNeighborhood().equalsIgnoreCase(filter.getNeighbourhood())) {
+            filter.getNeighbourhood().stream().noneMatch(
+                n -> n.equalsIgnoreCase(this.neighborhood))) {
             return false;
         }
 

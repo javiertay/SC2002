@@ -1,8 +1,11 @@
 package view;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import controller.ApplicationController;
 import model.*;
@@ -183,10 +186,19 @@ public class ApplicationCLI {
 
     private void setProjectFilter() {
         System.out.println("\n== Set Project Filters ==");
-    
-        System.out.print("Filter by Neighborhood (leave blank to skip): ");
-        String location = scanner.nextLine().trim();
-        filter.setNeighbourhood(location.isEmpty() ? null : location);
+
+        System.out.print("Enter neighborhoods (comma-separated): ");
+        String neighborhoodInput = scanner.nextLine().trim();
+        if (!neighborhoodInput.isEmpty()) {
+            Set<String> neighborhoods = Arrays.stream(neighborhoodInput.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .collect(Collectors.toSet());
+            filter.setNeighbourhood(neighborhoods);
+        } else {
+            filter.setNeighbourhood(null);
+        }
+
     
         System.out.print("Filter by Flat Type (e.g., 2-Room/3-Room, leave blank to skip): ");
         String flatType = scanner.nextLine().trim();
