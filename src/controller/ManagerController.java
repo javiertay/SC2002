@@ -50,7 +50,7 @@ public class ManagerController {
     }
 
     public void viewAllProject() {
-        Collection<Project> projects = ProjectRegistry.getAllProjects();
+        List<Project> projects = ProjectRegistry.getAllProjects().stream().sorted(Comparator.comparing(Project::getName, String.CASE_INSENSITIVE_ORDER)).toList();
 
         if (projects.isEmpty()) {
             System.out.println("No projects found.");
@@ -63,7 +63,8 @@ public class ManagerController {
         for (Project p : projects) {
             String visibility = p.isVisible() ? "Yes" : "No";
             String officerSlots = p.getCurrentOfficerSlots() + "/" + p.getMaxOfficerSlots();
-            String officers = p.getOfficerList().isEmpty() ? "No officer assigned" : String.join(", ", p.getOfficerList());
+            String officers = p.getOfficerList().isEmpty() ? "-" : String.join(", ", p.getOfficerList());
+            String officerList = (officers.length() > 10) ? officers.substring(0, 27) + "..." : officers;
 
             List<FlatType> flatTypes = new ArrayList<>(p.getFlatTypes().values());
             for (int i = 0; i < flatTypes.size(); i++) {
@@ -80,13 +81,13 @@ public class ManagerController {
                     String.valueOf(ft.getRemainingUnits()),
                     "$" + ft.getPrice(),
                     i == 0 ? officerSlots : "",
-                    i == 0 ? officers : ""
+                    i == 0 ? officerList : ""
                 );
 
                 rows.add(row);
             }
         }
-        rows.sort(Comparator.comparing(row -> row.get(0)));
+        // rows.sort(Comparator.comparing(row -> row.get(0)));
         TableUtil.printTable(headers, rows);
     }
 

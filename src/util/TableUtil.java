@@ -83,7 +83,7 @@ public class TableUtil {
 
     public static void printProjectTable(List<Project> projects, Applicant applicant, Filter filter) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d/M/yyyy");
-        List<String> headers = List.of("Project Name", "Neighborhood", "Open Date", "Close Date", "Flat Breakdown", "Project Status");
+        List<String> headers = List.of("Project Name", "Neighborhood", "Open Date", "Close Date", "Flat Breakdown", "Status");
         List<List<String>> rows = new ArrayList<>();
 
         for (Project p : projects) {

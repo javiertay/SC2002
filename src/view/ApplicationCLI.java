@@ -69,8 +69,6 @@ public class ApplicationCLI {
         System.out.println("Current Filters:");
         System.out.println(" - Neighborhood: " + (filter.getNeighbourhood() != null ? filter.getNeighbourhood() : "-"));
         System.out.println(" - Flat Type: " + (filter.getFlatType() != null ? filter.getFlatType() : "-"));
-        System.out.println(" - Min Price: " + (filter.getMinPrice() != null ? "$" + filter.getMinPrice() : "-"));
-        System.out.println(" - Max Price: " + (filter.getMaxPrice() != null ? "$" + filter.getMaxPrice() : "-"));
         System.out.println(" - Price Range: " + (filter.getMinPrice() != null && filter.getMaxPrice() != null ? "$" + filter.getMinPrice() + " - $" + filter.getMaxPrice()
                                                     : (filter.getMinPrice() != null ? "More than $" + filter.getMinPrice()
                                                         : (filter.getMaxPrice() != null ? "Less than $" + filter.getMaxPrice() : "-"))));
