@@ -87,6 +87,7 @@ public class MainApp {
 
             for (Project project : data.projects) {
                 if (!project.getManagerName().equalsIgnoreCase(manager.getName())) continue; // Only consider projects assigned to this manager
+                manager.addManagedProject(project.getName());
 
                 LocalDate openDate = project.getOpenDate();
                 LocalDate closeDate = project.getCloseDate();

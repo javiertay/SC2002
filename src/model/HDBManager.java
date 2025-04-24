@@ -1,7 +1,11 @@
 package model;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class HDBManager extends User {
     private String assignedProjectName = null;
+    private List<String> manageProjectList = new ArrayList<>();
 
     public HDBManager(String name, String nric, String password, int age, String maritalStatus) {
         super(name, nric, password, age, maritalStatus);
@@ -28,5 +32,13 @@ public class HDBManager extends User {
         this.assignedProjectName = null;
     }
 
-    // Manager capabilities — logic to be handled in controller/service layer.
+    public List<String> getManagedProjects() {
+        return new ArrayList<>(manageProjectList);
+    }
+    
+    public void addManagedProject(String projectName) {
+        if (!manageProjectList.contains(projectName)) {
+            manageProjectList.add(projectName);
+        }
+    }
 }
