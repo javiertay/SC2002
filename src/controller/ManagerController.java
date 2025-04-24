@@ -61,13 +61,6 @@ public class ManagerController {
         TableUtil.printProjectTable(projects, filter);
     }
 
-    public List<Project> getProjectsCreatedByManager(HDBManager manager) {
-        return ProjectRegistry.getAllProjects().stream()
-            .filter(p -> p.getManagerName().equalsIgnoreCase(manager.getName()))
-            .toList();
-    } 
-
-    // Edit visibility
     public void toggleProjectVisibility(String projectName) {
         if (!ProjectRegistry.exists(projectName)) {
             System.out.println("Project not found.");
@@ -160,7 +153,8 @@ public class ManagerController {
         }
         System.out.println("Project deleted.");
     }
- 
+
+    // ============ OFFICER RELATED METHODS (VIEW AND PROCESS) ============
     // Approve officer registration
     public boolean processOfficerApplication(HDBManager manager, String officerNric, HDBOfficer.RegistrationStatus targetStatus) {
         String projectName = manager.getAssignedProject();
@@ -203,7 +197,6 @@ public class ManagerController {
         return true;
     }
 
-    /* Officer Managements: View, Approve, Reject */
     public void getAllOfficersByStatus() {
         List<HDBOfficer> allOfficers = new ArrayList<>();
 

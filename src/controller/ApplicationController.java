@@ -264,10 +264,6 @@ public class ApplicationController {
         return true;
     }
 
-    public List<Application> getPendingWithdrawal (String projectName) {
-        return ApplicationRegistry.getWithdrawalRequestsByProject(projectName);
-    }
-
     public List<Application> getFilteredApplications(Filter filter) {
         List<Application> allApps = ApplicationRegistry.getAllApplications()
         .values().stream()
@@ -296,7 +292,6 @@ public class ApplicationController {
             .filter(app -> app.isWithdrawalRequested())
             .toList();
     }    
-    
     
     // ====== HDB Officer Functions ======
     public boolean assignFlat(HDBOfficer officer, String applicantNRIC) {

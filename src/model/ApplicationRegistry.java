@@ -23,22 +23,9 @@ public class ApplicationRegistry {
         return applicationMap.getOrDefault(nric, new ArrayList<>());
     }
 
-    // Remove application
-    public static Application removeApplication(String nric) {
-        List<Application> application = applicationMap.get(nric);
-        if (application == null || application.isEmpty()) return null;
-        return application.remove(application.size() - 1);
-    }
-
     // Get all applications regardless of visibility and status
     public static Map<String, List<Application>> getAllApplications() {
         return applicationMap;
-    }
-
-    // Check if application exists
-    public static boolean hasApplication(String nric) {
-        List<Application> application = applicationMap.get(nric);
-        return application != null && !application.isEmpty();
     }
 
     public static boolean hasActiveApplication(String nric) {
@@ -72,22 +59,6 @@ public class ApplicationRegistry {
         if (applications == null) return false;
         return applications.stream().anyMatch(app -> 
             app.getProject().getName().equalsIgnoreCase(projectName));
-    }
-
-    public static List<Application> getPendingApplicationsByProject(String projectName) {
-        return applicationMap.values().stream()
-        .flatMap(List::stream)
-        .filter(app -> app.getProject().getName().equalsIgnoreCase(projectName))
-        .filter(app -> app.getStatus() == Application.Status.PENDING)
-        .toList();
-    }
-    
-    public static List<Application> getWithdrawalRequestsByProject(String projectName) {
-        return applicationMap.values().stream()
-            .flatMap(List::stream)
-            .filter(app -> app.getProject().getName().equalsIgnoreCase(projectName))
-            .filter(Application::isWithdrawalRequested)
-            .toList();
     }
 
     public static List<Application> getSuccessfulApplicationsByProject(String projectName) {

@@ -36,13 +36,6 @@ public class ProjectRegistry {
         return result;
     }
 
-    public static void toggleVisibility(String projectName) {
-        Project p = projectMap.get(projectName);
-        if (p != null) {
-            p.setVisibility(!p.isVisible());
-        }
-    }
-
     public static void addProject(Project project) {
         projectMap.put(project.getName(), project);
     }
