@@ -71,7 +71,9 @@ public class ApplicationCLI {
         System.out.println(" - Flat Type: " + (filter.getFlatType() != null ? filter.getFlatType() : "-"));
         System.out.println(" - Min Price: " + (filter.getMinPrice() != null ? "$" + filter.getMinPrice() : "-"));
         System.out.println(" - Max Price: " + (filter.getMaxPrice() != null ? "$" + filter.getMaxPrice() : "-"));
-        System.out.println(" - Price Range: " + (filter.getMinPrice() != null && filter.getMaxPrice() != null ? "$" + filter.getMinPrice() + " - $" + filter.getMaxPrice() : "-"));
+        System.out.println(" - Price Range: " + (filter.getMinPrice() != null && filter.getMaxPrice() != null ? "$" + filter.getMinPrice() + " - $" + filter.getMaxPrice()
+                                                    : (filter.getMinPrice() != null ? "More than $" + filter.getMinPrice()
+                                                        : (filter.getMaxPrice() != null ? "Less than $" + filter.getMaxPrice() : "-"))));
         System.out.println();
 
         
@@ -98,7 +100,7 @@ public class ApplicationCLI {
             return;
         }
 
-        TableUtil.printProjectTable(filteredProjects, applicant); // shows table of projects
+        TableUtil.printProjectTable(filteredProjects, applicant, filter); // shows table of projects
 
         submitApplication(applicant); // calls method to prompt user to apply
     }
@@ -187,7 +189,7 @@ public class ApplicationCLI {
     private void setProjectFilter() {
         System.out.println("\n== Set Project Filters ==");
 
-        System.out.print("Enter neighborhoods (comma-separated): ");
+        System.out.print("Enter neighborhoods (comma-separated or leave blank to skip): ");
         String neighborhoodInput = scanner.nextLine().trim();
         if (!neighborhoodInput.isEmpty()) {
             Set<String> neighborhoods = Arrays.stream(neighborhoodInput.split(","))

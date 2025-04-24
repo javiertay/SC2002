@@ -81,7 +81,7 @@ public class TableUtil {
         }
     }
 
-    public static void printProjectTable(List<Project> projects, Applicant applicant) {
+    public static void printProjectTable(List<Project> projects, Applicant applicant, Filter filter) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d/M/yyyy");
         List<String> headers = List.of("Project Name", "Neighborhood", "Open Date", "Close Date", "Flat Breakdown", "Project Status");
         List<List<String>> rows = new ArrayList<>();
@@ -99,6 +99,13 @@ public class TableUtil {
 
             for (Map.Entry<String, FlatType> entry : flatTypes.entrySet()) {
                 String type = entry.getKey();
+
+                // Enforce filter flat type match if provided
+                if (filter != null && filter.getFlatType() != null) {
+                    if (!type.equalsIgnoreCase(filter.getFlatType())) {
+                        continue; // Skip if it doesn't match
+                    }
+                }
 
                 // Inline eligibility check: If single & >= 35, only show 2-Room
                 if (applicant != null &&
