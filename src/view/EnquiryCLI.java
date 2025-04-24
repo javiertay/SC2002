@@ -1,6 +1,7 @@
 package view;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
@@ -183,26 +184,36 @@ public class EnquiryCLI {
     }
     
     private void viewEnquiriesForStaff() {
-        String projectName;
-
         if (user instanceof HDBOfficer officer) {
-            projectName = officer.getAssignedProject();
-        } else if (user instanceof HDBManager manager) {
-            projectName = manager.getAssignedProject();
-        } else {
-            System.out.println("Unauthorized access.");
+            String assignedProject = officer.getAssignedProject();
+            if (assignedProject == null || assignedProject.isBlank()) {
+                System.out.println("You are not assigned to any project.");
+                return;
+            }
+    
+            List<Enquiry> enquiries = enquiryController.getProjectEnquiries(assignedProject);
+            TableUtil.printEnquiryTable(enquiries);
+            replyToEnquiry();
             return;
         }
 
-        if (projectName == null || projectName.isBlank()) {
-            System.out.println("You are not assigned to any project.");
+        if (user instanceof HDBManager manager) {
+            List<String> managedProjects = manager.getManagedProjects();
+
+            if (managedProjects == null || managedProjects.isEmpty()) {
+                System.out.println("You have not managed any projects.");
+                return;
+            }
+
+            List<Enquiry> allEnquiries = new ArrayList<>();
+            for (String project : managedProjects) {
+                allEnquiries.addAll(enquiryController.getProjectEnquiries(project));
+            }
+
+            TableUtil.printEnquiryTable(allEnquiries);
+            replyToEnquiry();
             return;
         }
-    
-        List<Enquiry> enquiries = enquiryController.getProjectEnquiries(projectName);
-        
-        TableUtil.printEnquiryTable(enquiries);
-        replyToEnquiry();
     }
 
     private void replyToEnquiry() {

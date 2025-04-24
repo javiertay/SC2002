@@ -168,7 +168,7 @@ public class TableUtil {
                 repliedBy
             ));
         }
-        rows.sort(Comparator.comparing(row -> row.get(0)));
+        rows.sort(Comparator.comparing(row -> row.get(2))); // sort according to project name
         TableUtil.printTable(headers, rows);
     }
 }

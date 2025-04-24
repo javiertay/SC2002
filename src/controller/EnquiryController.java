@@ -37,8 +37,7 @@ public class EnquiryController {
         }
 
         if (user instanceof HDBManager manager) {
-            if (manager.getAssignedProject() != null &&
-                !manager.getAssignedProject().equals(projectName)) {
+            if (!manager.getManagedProjects().contains(projectName)) {
                 System.out.println("You can only reply to enquiries for your assigned project.");
                 return false;
             }
