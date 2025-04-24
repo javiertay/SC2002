@@ -107,6 +107,11 @@ public class TableUtil {
                     }
                 }
 
+                if ((filter.getMinPrice() != null && entry.getValue().getPrice() < filter.getMinPrice()) ||
+                    (filter.getMaxPrice() != null && entry.getValue().getPrice() > filter.getMaxPrice())) {
+                    continue;
+                }
+
                 // Inline eligibility check: If single & >= 35, only show 2-Room
                 if (applicant != null &&
                     applicant.getMaritalStatus().equalsIgnoreCase("single") &&
@@ -136,6 +141,50 @@ public class TableUtil {
         }
         rows.sort(Comparator.comparing(row -> row.get(0)));
         printTable(headers, rows); // Assuming this is your generic method
+    }
+
+    public static void printProjectTable(List<Project> projects, Filter filter) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d/M/yyyy");
+        List<String> headers = List.of("Name", "Neighborhood", "Open Date", "Close Date", "Manager", "Visibility", "Flat Type", "Units Left", "Price", "Officer Slots", "Officers");
+        List<List<String>> rows = new ArrayList<>();
+    
+        for (Project p : projects) {
+            String visibility = p.isVisible() ? "Yes" : "No";
+            String officerSlots = p.getCurrentOfficerSlots() + "/" + p.getMaxOfficerSlots();
+            String officers = p.getOfficerList().isEmpty() ? "-" : String.join(", ", p.getOfficerList());
+            String officerList = (officers.length() > 10) ? officers.substring(0, 27) + "..." : officers;
+    
+            boolean firstPrinted = false;
+
+            for (FlatType ft : p.getFlatTypes().values()) {
+                String type = ft.getType();
+                int price = ft.getPrice();
+
+                if (filter.getFlatType() != null && !filter.getFlatType().equalsIgnoreCase(type)) continue;
+
+                if ((filter.getMinPrice() != null && price < filter.getMinPrice()) ||
+                    (filter.getMaxPrice() != null && price > filter.getMaxPrice())) continue;
+
+                // Print only once per project for shared info
+                List<String> row = List.of(
+                    !firstPrinted ? p.getName() : "",
+                    !firstPrinted ? p.getNeighborhood() : "",
+                    !firstPrinted ? p.getOpenDate().format(formatter) : "",
+                    !firstPrinted ? p.getCloseDate().format(formatter) : "",
+                    !firstPrinted ? p.getManagerName() : "",
+                    !firstPrinted ? visibility : "",
+                    ft.getType(),
+                    String.valueOf(ft.getRemainingUnits()),
+                    "$" + ft.getPrice(),
+                    !firstPrinted ? officerSlots : "",
+                    !firstPrinted ? officerList : ""
+                );
+
+                rows.add(row);
+                firstPrinted = true;
+            }
+        }
+        TableUtil.printTable(headers, rows);
     }
 
     public static void printEnquiryTable(List<Enquiry> enquiries) {

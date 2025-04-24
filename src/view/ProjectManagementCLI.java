@@ -2,17 +2,21 @@ package view;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import controller.ManagerController;
 import model.FlatType;
 import model.HDBManager;
 import model.Project;
+import model.ProjectRegistry;
 import util.Breadcrumb;
+import util.Filter;
 import util.InputUtil;
 
 public class ProjectManagementCLI {
+    private final Filter filter;
+    private static final Map<String, Filter> managerFilters = new HashMap<>();
     private final HDBManager manager;
     private final ManagerController managerController;
     private final Scanner scanner;
@@ -24,6 +28,7 @@ public class ProjectManagementCLI {
         this.manager = manager;
         this.managerController = managerController;
         this.scanner = scanner;
+        this.filter = managerFilters.computeIfAbsent(manager.getNric(), k -> new Filter());
     }
     
     public void start() {
@@ -55,7 +60,31 @@ public class ProjectManagementCLI {
     }
 
     private void viewAllProjects() {
-        managerController.viewAllProject();
+        System.out.println("\n------ Current Filters ------");
+        System.out.println(" - Neighborhood: " + (filter.getNeighbourhood() != null ? filter.getNeighbourhood() : "-"));
+        System.out.println(" - Flat Type: " + (filter.getFlatType() != null ? filter.getFlatType() : "-"));
+        System.out.println(" - Price Range: " +
+            (filter.getMinPrice() != null && filter.getMaxPrice() != null
+                ? "$" + filter.getMinPrice() + " - $" + filter.getMaxPrice()
+                : (filter.getMinPrice() != null ? "More than $" + filter.getMinPrice()
+                : (filter.getMaxPrice() != null ? "Less than $" + filter.getMaxPrice() : "-")))
+        );
+        System.out.println();
+
+        if (!filter.isEmpty()) {
+            clearFilters();
+            managerController.viewAllProject(filter);
+        } else {
+            System.out.print("Would you like to filter the projects? (Y/N): ");
+            String response = scanner.nextLine().trim().toLowerCase();
+    
+            if (response.equals("y")) {
+                setProjectFilter(); // prompts user and updates the 'filter' object
+            }
+            managerController.viewAllProject(filter);
+        }
+
+        // managerController.viewAllProject(filter);
     }
 
     private void createProject() {
@@ -136,8 +165,8 @@ public class ProjectManagementCLI {
             }
             try {
                 int val = Integer.parseInt(input);
-                if (val < 0 || val > 10) {
-                    System.out.println("Officer slots must be between 0 and 10.");
+                if (val < 1 || val > 10) {
+                    System.out.println("Officer slots must be between 1 and 10.");
                 } else {
                     maxSlots = val;
                     break;
@@ -208,13 +237,13 @@ public class ProjectManagementCLI {
                 case 1 -> {
                     System.out.print("Enter new neighborhood: ");
                     String neighborhood = scanner.nextLine().trim();
-                    System.out.println(managerController.updateNeighborhood(manager, neighborhood) ? "Neighborhood updated." : "Update failed.");
+                    System.out.println(managerController.updateNeighborhood(manager, project.getName(), neighborhood) ? "Neighborhood updated." : "Update failed.");
                 }
                 case 2 -> {
                     System.out.print("Enter new open date (DD-MM-YYYY): ");
                     try {
                         LocalDate date = LocalDate.parse(scanner.nextLine().trim(), formatter);
-                        System.out.println(managerController.updateOpenDate(manager, date) ? "Open date updated." : "Update failed.");
+                        System.out.println(managerController.updateOpenDate(manager, project.getName(), date) ? "Open date updated." : "Update failed.");
                     } catch (Exception e) {
                         System.out.println("Invalid date format.");
                     }
@@ -223,7 +252,7 @@ public class ProjectManagementCLI {
                     System.out.print("Enter new close date (DD-MM-YYYY): ");
                     try {
                         LocalDate date = LocalDate.parse(scanner.nextLine().trim(), formatter);
-                        System.out.println(managerController.updateCloseDate(manager, date) ? "Close date updated." : "Update failed.");
+                        System.out.println(managerController.updateCloseDate(manager, project.getName(), date) ? "Close date updated." : "Update failed.");
                     } catch (Exception e) {
                         System.out.println("Invalid date format.");
                     }
@@ -245,7 +274,7 @@ public class ProjectManagementCLI {
                                 continue;
                             }
 
-                            boolean success = managerController.updateFlatUnits(manager, type, units, price);
+                            boolean success = managerController.updateFlatUnits(manager, project.getName(), type, units, price);
                             System.out.println(success ? "Updated." : "Failed to update " + type);
                         } catch (Exception e) {
                             System.out.println("Invalid number.");
@@ -256,7 +285,11 @@ public class ProjectManagementCLI {
                     System.out.print("Enter new number of officer slots: ");
                     try {
                         int slots = Integer.parseInt(scanner.nextLine().trim());
-                        System.out.println(managerController.updateOfficerSlots(manager, slots) ? "Officer slots updated." : "Failed.");
+                        if (slots < 1 || slots > 10) {
+                            System.out.println("Number of officer slots must be between 1 and 10.");
+                            break;
+                        }
+                        System.out.println(managerController.updateOfficerSlots(manager, project.getName(), slots) ? "Officer slots updated." : "Failed.");
                     } catch (Exception e) {
                         System.out.println("Invalid number.");
                     }
@@ -280,15 +313,20 @@ public class ProjectManagementCLI {
         System.out.println("------------------------------------");
     }
 
-    private void viewMyProjects() {
-        List<Project> projects = managerController.getProjectsCreatedByManager(manager);
-    
-        if (projects.isEmpty()) {
-            System.out.println("You have not created any projects.");
-            return;
-        }
-    
+    private void viewMyProjects() {    
         while (true) {
+            List<String> projectNames = manager.getManagedProjects();
+
+            List<Project> projects = projectNames.stream()
+                .map(ProjectRegistry::getProjectByName)
+                .filter(Objects::nonNull)
+                .toList();
+
+            if (projects.isEmpty()) {
+                System.out.println("You are not managing any projects.");
+                return;
+            }
+
             System.out.println("\n=== " + breadcrumb.getPath() + " ===");
             for (int i = 0; i < projects.size(); i++) {
                 Project p = projects.get(i);
@@ -339,7 +377,8 @@ public class ProjectManagementCLI {
                     System.out.print("Are you sure you want to delete this project? (Y/N): ");
                     String confirm = scanner.nextLine().trim().toUpperCase();
                     if (confirm.equals("Y")) {
-                        managerController.deleteProject(project.getName());
+                        managerController.deleteProject(manager, project.getName());
+                        return;
                     } else {
                         System.out.println("Deletion cancelled.");
                     }
@@ -347,6 +386,61 @@ public class ProjectManagementCLI {
                 }
                 case "0" -> { return; }
                 default -> System.out.println("Invalid option. Please try again.");
+            }
+        }
+    }
+    
+    private void setProjectFilter() {
+        System.out.println("\n== Set Project Filters ==");
+
+        System.out.print("Enter neighborhoods (comma-separated or leave blank to skip): ");
+        String neighborhoodInput = scanner.nextLine().trim();
+        if (!neighborhoodInput.isEmpty()) {
+            Set<String> neighborhoods = Arrays.stream(neighborhoodInput.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .collect(Collectors.toSet());
+            filter.setNeighbourhood(neighborhoods);
+        } else {
+            filter.setNeighbourhood(null);
+        }
+
+    
+        System.out.print("Filter by Flat Type (e.g., 2-Room/3-Room, leave blank to skip): ");
+        String flatType = scanner.nextLine().trim();
+        filter.setFlatType(flatType.isEmpty() ? null : flatType);
+
+        System.out.print("Filter by Minimum Price (leave blank to skip): ");
+        String minPrice = scanner.nextLine().trim();
+        if (!minPrice.isEmpty()) {
+            try {
+                filter.setMinPrice(Integer.parseInt(minPrice));
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid number for minimum price. Skipping.");
+            }
+        }
+        
+        System.out.print("Filter by Maximum Price (leave blank to skip): ");
+        String maxPrice = scanner.nextLine().trim();
+        if (!maxPrice.isEmpty()) {
+            try {
+                filter.setMaxPrice(Integer.parseInt(maxPrice));
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid number for maximum price. Skipping.");
+            }
+        }
+        
+        System.out.println("Filter set.");
+    }
+    
+    private void clearFilters() {
+        if (!filter.isEmpty()) {
+            System.out.print("Do you want to reset all filters? (Y/N): ");
+            String confirmation = scanner.nextLine().trim();
+            
+            if (confirmation.equalsIgnoreCase("y")) {
+                filter.clear();
+                System.out.println("Filter cleared.");
             }
         }
     }

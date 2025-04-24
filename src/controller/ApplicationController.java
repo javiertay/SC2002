@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import util.*;
 
@@ -170,8 +171,9 @@ public class ApplicationController {
 
     // ====== HDB Manager Functions ======
     public void approveRejectApplication(String nric, String projectName, HDBManager manager, Application.Status status) {
-        if (!manager.getAssignedProject().equalsIgnoreCase(projectName)) {
-            System.out.println("You are not assigned to this project.");
+        boolean authorized = manager.getManagedProjects().stream().anyMatch(p -> p.equalsIgnoreCase(projectName));
+        if (!authorized) {
+            System.out.println("You are not the manager for this project. You can only process applications for projects you manage!");
             return;
         }
 
@@ -191,28 +193,16 @@ public class ApplicationController {
             FlatType ft = application.getProject().getFlatType(flatType);
             if (ft == null || ft.getRemainingUnits() <= 0) {
                 System.out.println("No units left for this flat type.");
+                application.setStatus(Application.Status.UNSUCCESSFUL); // auto set to reject if no more units left
                 return;
             }
         }
 
         application.setStatus(status);
         System.out.println("Application for NRIC: " + nric + " in project: " + projectName + " has been " + status);
-    }
+    } 
 
-    public List<Application> getPendingApplicationsByProject(String projectName) {
-        return ApplicationRegistry.getPendingApplicationsByProject(projectName);
-    }
-
-    public List<Application> getApplicationsByProject(String projectName) {
-        return ApplicationRegistry.getAllApplications().values().stream()
-            .flatMap(List::stream)
-            .filter(app -> app.getProject().getName().equalsIgnoreCase(projectName.trim()))
-            .toList();
-    }    
-
-    public boolean approveWithdrawal(HDBManager manager, String nric) {
-        String assignedProject = manager.getAssignedProject();
-    
+    public boolean approveWithdrawal(HDBManager manager, String nric) {    
         List<Application> apps = ApplicationRegistry.getApplicationByNRIC(nric);
         if (apps == null || apps.isEmpty()) {
             System.out.println("No applications found for this applicant.");
@@ -221,7 +211,8 @@ public class ApplicationController {
     
         // Find the relevant withdrawal request for manager's assigned project
         Application app = apps.stream()
-            .filter(a -> a.getProject().getName().equalsIgnoreCase(assignedProject))
+            .filter(a -> manager.getManagedProjects().stream()
+                        .anyMatch(p -> p.equalsIgnoreCase(a.getProject().getName())))
             .filter(Application::isWithdrawalRequested)
             .findFirst()
             .orElse(null);
@@ -248,9 +239,7 @@ public class ApplicationController {
     }
     
 
-    public boolean rejectWithdrawal(HDBManager manager, String nric) {
-        String assignedProject = manager.getAssignedProject();
-    
+    public boolean rejectWithdrawal(HDBManager manager, String nric) {    
         List<Application> apps = ApplicationRegistry.getApplicationByNRIC(nric);
         if (apps == null || apps.isEmpty()) {
             System.out.println("No applications found for this applicant.");
@@ -259,7 +248,8 @@ public class ApplicationController {
     
         // Look for a withdrawal request for the manager's assigned project
         Application app = apps.stream()
-            .filter(a -> a.getProject().getName().equalsIgnoreCase(assignedProject))
+            .filter(a -> manager.getManagedProjects().stream()
+                        .anyMatch(p -> p.equalsIgnoreCase(a.getProject().getName())))
             .filter(Application::isWithdrawalRequested)
             .findFirst()
             .orElse(null);
@@ -273,7 +263,6 @@ public class ApplicationController {
         System.out.println("Withdrawal request rejected.");
         return true;
     }
-    
 
     public List<Application> getPendingWithdrawal (String projectName) {
         return ApplicationRegistry.getWithdrawalRequestsByProject(projectName);
@@ -287,6 +276,27 @@ public class ApplicationController {
 
         return FilterUtil.applyFilter(allApps, filter);
     }
+
+    public List<Application> getApplicationsByManager(HDBManager manager) {
+        return manager.getManagedProjects().stream()
+            .map(ProjectRegistry::getProjectByName)
+            .filter(Objects::nonNull)
+            .flatMap(project -> ApplicationRegistry.getApplicationsByProject(project.getName()).stream())
+            .toList();
+    }
+
+    public List<Application> getPendingApplicationsByManager(HDBManager manager) {
+        return getApplicationsByManager(manager).stream()
+            .filter(app -> app.getStatus() == Application.Status.PENDING)
+            .toList();
+    }
+
+    public List<Application> getWithdrawalRequestsByManager(HDBManager manager) {
+        return getApplicationsByManager(manager).stream()
+            .filter(app -> app.isWithdrawalRequested())
+            .toList();
+    }    
+    
     
     // ====== HDB Officer Functions ======
     public boolean assignFlat(HDBOfficer officer, String applicantNRIC) {

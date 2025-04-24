@@ -113,6 +113,21 @@ public class ApplicationManagementCLI {
             return;
         }      
 
+        List<String> headers = List.of("Applicant", "NRIC", "Age", "Marital Status", "Flat Type", "Project");
+
+        List<List<String>> rows = successful.stream()
+            .map(app -> List.of(
+                app.getApplicant().getName(),
+                app.getApplicant().getNric(),
+                String.valueOf(app.getApplicant().getAge()),
+                app.getApplicant().getMaritalStatus(),
+                app.getFlatType(),
+                app.getProject().getName()
+            ))
+            .toList();
+    
+        TableUtil.printTable(headers, rows);
+
         System.out.print("Enter Applicant NRIC to generate receipt (or exit): ");
         String applicantNric = scanner.nextLine().trim().toUpperCase();
 
@@ -149,8 +164,7 @@ public class ApplicationManagementCLI {
     }
 
     private void viewAllApplicationsForProject() {
-        String projectName = manager.getAssignedProject();
-        List<Application> apps = applicationController.getApplicationsByProject(projectName);
+        List<Application> apps = applicationController.getApplicationsByManager(manager);
     
         if (apps.isEmpty()) {
             System.out.println("No applications found for your project.");
@@ -174,7 +188,7 @@ public class ApplicationManagementCLI {
     }    
 
     private void processApplication() {   
-        List<Application> pending = applicationController.getPendingApplicationsByProject(projectName);
+        List<Application> pending = applicationController.getPendingApplicationsByManager(manager);
 
         if (pending.isEmpty()) {
             System.out.println("No pending applications for this project.");
@@ -183,7 +197,7 @@ public class ApplicationManagementCLI {
 
         System.out.println("\n=== Pending Applications ===");
         for (Application app : pending) {
-            System.out.println("- Name: "+ app.getApplicant().getName() + ", NRIC: " + app.getApplicant().getNric() + ", Flat Type: " + app.getFlatType());
+            System.out.println("- Name: "+ app.getApplicant().getName() + ", NRIC: " + app.getApplicant().getNric() + ", BTO Project Name: " + app.getProject().getName() + ", Flat Type: " + app.getFlatType());
         }
 
         System.out.print("\nProcess Application? (Y/N): ");
@@ -194,16 +208,21 @@ public class ApplicationManagementCLI {
         }
 
         System.out.print("Enter applicant NRIC: ");
-        String nric = scanner.nextLine();
+        String nric = scanner.nextLine().trim();
+        if (nric.isEmpty()) return;
+        System.out.print("Enter BTO Project Name: ");
+        String projectName = scanner.nextLine().trim();
+        if (projectName.isEmpty()) return;
         System.out.print("Approve or Reject (A/R): ");
         String decision = scanner.nextLine().trim().toUpperCase();
+        if (decision.isEmpty()) return;
 
         Application.Status status = decision.equals("A") ? Application.Status.SUCCESSFUL : Application.Status.UNSUCCESSFUL;
         applicationController.approveRejectApplication(nric, projectName, manager, status);
     }
 
     private void approveWithdrawal() {
-        List<Application> requests = applicationController.getPendingWithdrawal(projectName);
+        List<Application> requests = applicationController.getWithdrawalRequestsByManager(manager);
 
         if (requests.isEmpty()) {
             System.out.println("No withdrawal requests found.");
@@ -212,7 +231,7 @@ public class ApplicationManagementCLI {
 
         System.out.println("\n=== Withdrawal Requests ===");
         for (Application app : requests) {
-            System.out.println("- Name: "+ app.getApplicant().getName() + ", NRIC: " + app.getApplicant().getNric() + ", Status: " + app.getStatus());
+            System.out.println("- Name: "+ app.getApplicant().getName() + ", NRIC: " + app.getApplicant().getNric() + ", BTO Project Name: " + app.getProject().getName() + ", Status: " + app.getStatus());
         }
 
         System.out.print("\nProcess Withdrawal? (Y/N): ");
@@ -251,7 +270,7 @@ public class ApplicationManagementCLI {
         if (!filter.isEmpty()) {
             clearFilters();
         } else {
-            System.out.println("No filters applied. Would you like to add filters? (Y/N): ");
+            System.out.print("No filters applied. Would you like to add filters? (Y/N): ");
             String response = scanner.nextLine().trim();
 
             if (response.equalsIgnoreCase("y")) {

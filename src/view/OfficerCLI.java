@@ -129,7 +129,7 @@ public class OfficerCLI {
         System.out.println("Visibility: " + (project.isVisible() ? "Visible" : "Hidden"));
         System.out.println("Flat Types:");
         project.getFlatTypes().forEach((type, flat) ->
-                System.out.println("- " + type + ": " + flat.getRemainingUnits() + " units available"));
+                System.out.println("- " + type + " ($"+flat.getPrice()+"): " + flat.getRemainingUnits() + " units available"));
     }
 
     private void manageEnquiries() {

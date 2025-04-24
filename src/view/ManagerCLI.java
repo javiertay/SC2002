@@ -109,10 +109,13 @@ public class ManagerCLI {
     }
 
     private void showDashboard() {
-        List<Application> applications = ApplicationRegistry.getPendingApplicationsByProject(manager.getAssignedProject());
+        List<Application> applications = ApplicationRegistry.getAllApplications().values().stream().flatMap(List::stream)
+                                                                .filter(app -> app.getProject().getManagerName().equalsIgnoreCase(manager.getName()))
+                                                                .filter(app -> app.getStatus() == Application.Status.PENDING).toList();
         int pendingAppCount = applications.size();
 
-        List<Application> withdrawalRequests = ApplicationRegistry.getWithdrawalRequestsByProject(manager.getAssignedProject());
+        List<Application> withdrawalRequests = ApplicationRegistry.getAllApplications()
+        .values().stream().flatMap(List::stream).filter(app -> app.isWithdrawalRequested()).filter(app -> manager.getManagedProjects().stream().anyMatch(p -> p.equalsIgnoreCase(app.getProject().getName()))).toList();
         int pendingWithdrawals = withdrawalRequests.size();
 
         List<HDBOfficer> officers = managerController.getPendingOfficerApplications(manager);

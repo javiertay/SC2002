@@ -1,6 +1,8 @@
 package controller;
 
 import model.*;
+import util.Filter;
+import util.FilterUtil;
 import util.TableUtil;
 
 import java.time.LocalDate;
@@ -49,46 +51,14 @@ public class ManagerController {
         }
     }
 
-    public void viewAllProject() {
-        List<Project> projects = ProjectRegistry.getAllProjects().stream().sorted(Comparator.comparing(Project::getName, String.CASE_INSENSITIVE_ORDER)).toList();
+    public void viewAllProject(Filter filter) {
+        List<Project> projects = FilterUtil.applyFilter(ProjectRegistry.getAllProjects().stream().sorted(Comparator.comparing(Project::getName, String.CASE_INSENSITIVE_ORDER)).toList(), filter);
 
         if (projects.isEmpty()) {
             System.out.println("No projects found.");
             return;
         }
-
-        List<String> headers = List.of("Name", "Neighborhood", "Open Date", "Close Date", "Manager", "Visibility", "Flat Type", "Units Left", "Price", "Officer Slots", "Officers");
-        List<List<String>> rows = new ArrayList<>();
-
-        for (Project p : projects) {
-            String visibility = p.isVisible() ? "Yes" : "No";
-            String officerSlots = p.getCurrentOfficerSlots() + "/" + p.getMaxOfficerSlots();
-            String officers = p.getOfficerList().isEmpty() ? "-" : String.join(", ", p.getOfficerList());
-            String officerList = (officers.length() > 10) ? officers.substring(0, 27) + "..." : officers;
-
-            List<FlatType> flatTypes = new ArrayList<>(p.getFlatTypes().values());
-            for (int i = 0; i < flatTypes.size(); i++) {
-                FlatType ft = flatTypes.get(i);
-
-                List<String> row = List.of(
-                    i == 0 ? p.getName() : "",
-                    i == 0 ? p.getNeighborhood() : "",
-                    i == 0 ? p.getOpenDate().toString() : "",
-                    i == 0 ? p.getCloseDate().toString() : "",
-                    i == 0 ? p.getManagerName() : "",
-                    i == 0 ? visibility : "",
-                    ft.getType(),
-                    String.valueOf(ft.getRemainingUnits()),
-                    "$" + ft.getPrice(),
-                    i == 0 ? officerSlots : "",
-                    i == 0 ? officerList : ""
-                );
-
-                rows.add(row);
-            }
-        }
-        // rows.sort(Comparator.comparing(row -> row.get(0)));
-        TableUtil.printTable(headers, rows);
+        TableUtil.printProjectTable(projects, filter);
     }
 
     public List<Project> getProjectsCreatedByManager(HDBManager manager) {
@@ -109,32 +79,32 @@ public class ManagerController {
         System.out.println("Project " + projectName + " is now " + status + " to applicant.");
     }
 
-    public boolean updateNeighborhood(HDBManager manager, String newNeighborhood) {
-        Project project = getAssignedProject(manager);
+    public boolean updateNeighborhood(HDBManager manager, String projectName, String newNeighborhood) {
+        Project project = getManagedProject(manager, projectName);
         if (project == null) return false;
     
         project.setNeighborhood(newNeighborhood);
         return true;
     }
     
-    public boolean updateOpenDate(HDBManager manager, LocalDate openDate) {
-        Project project = getAssignedProject(manager);
+    public boolean updateOpenDate(HDBManager manager, String projectName, LocalDate openDate) {
+        Project project = getManagedProject(manager, projectName);
         if (project == null) return false;
     
         project.setOpenDate(openDate);
         return true;
     }
     
-    public boolean updateCloseDate(HDBManager manager, LocalDate closeDate) {
-        Project project = getAssignedProject(manager);
+    public boolean updateCloseDate(HDBManager manager, String projectName, LocalDate closeDate) {
+        Project project = getManagedProject(manager, projectName);
         if (project == null) return false;
     
         project.setCloseDate(closeDate);
         return true;
     }
     
-    public boolean updateFlatUnits(HDBManager manager, String flatType, int units, int price) {
-        Project project = getAssignedProject(manager);
+    public boolean updateFlatUnits(HDBManager manager, String projectName, String flatType, int units, int price) {
+        Project project = getManagedProject(manager, projectName);
         if (project == null) return false;
 
         int noOfBookedUnits = project.getFlatTypes().get(flatType).getTotalUnits() - project.getFlatTypes().get(flatType).getRemainingUnits();
@@ -146,8 +116,13 @@ public class ManagerController {
         return true;
     }
     
-    public boolean updateOfficerSlots(HDBManager manager, int slots) {
-        Project project = getAssignedProject(manager);
+    public boolean updateOfficerSlots(HDBManager manager, String projectName, int slots) {
+        if (slots < 1 || slots > 10) {
+            System.out.println("Officer slots must be between 1 and 10.");
+            return false;
+        }
+        
+        Project project = getManagedProject(manager, projectName);
         if (project == null) return false;
     
         project.setMaxOfficerSlots(slots);
@@ -155,18 +130,34 @@ public class ManagerController {
     }
         
     // Utility
-    private Project getAssignedProject(HDBManager manager) {
-        String name = manager.getAssignedProject();
-        return (name == null) ? null : ProjectRegistry.getProjectByName(name);
+    private Project getManagedProject(HDBManager manager, String projectName) {
+        if (projectName == null || !manager.getManagedProjects().contains(projectName)) {
+            System.out.println("You are not authorized to edit this project.");
+            return null;
+        }
+    
+        return ProjectRegistry.getProjectByName(projectName);
     }
     
     // Delete a project
-    public void deleteProject(String projectName) {
+    public void deleteProject(HDBManager manager, String projectName) {
+        boolean authorized = manager.getManagedProjects().stream().anyMatch(p -> p.equalsIgnoreCase(projectName));
+
+        if (!authorized) {
+            System.out.println("You cannot delete a project that you are not managing.");
+            return;
+        }
+
         if (!ProjectRegistry.exists(projectName)) {
             System.out.println("Project not found.");
             return;
         }
         ProjectRegistry.removeProject(projectName);
+        manager.getManagedProjects().removeIf(p -> p.equalsIgnoreCase(projectName));
+        if (manager.getAssignedProject() != null &&
+            manager.getAssignedProject().equalsIgnoreCase(projectName)) {
+            manager.assignToProject(null);
+        }
         System.out.println("Project deleted.");
     }
  
@@ -288,12 +279,12 @@ public class ManagerController {
 
         List<String> headers = List.of("Name", "NRIC", "Project Name", "Status");
     
-        List<List<String>> rows = pendingOfficers.stream().map(officer -> List.of(
+        List<List<String>> rows = new ArrayList<>(pendingOfficers.stream().map(officer -> List.of(
             officer.getName(),
             officer.getNric(),
-            officer.getAssignedProject() != null ? manager.getAssignedProject() : "-",
+            officer.getAssignedProject() == null ? manager.getAssignedProject() : "-",
             "Pending"
-        )).toList();
+        )).toList());
         rows.sort(Comparator.comparing(row -> row.get(0)));
         TableUtil.printTable(headers, rows);
     }

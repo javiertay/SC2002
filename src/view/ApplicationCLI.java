@@ -100,7 +100,9 @@ public class ApplicationCLI {
 
         TableUtil.printProjectTable(filteredProjects, applicant, filter); // shows table of projects
 
-        submitApplication(applicant); // calls method to prompt user to apply
+        if (!ApplicationRegistry.hasActiveApplication(applicant.getNric())) {
+            submitApplication(applicant); // calls method to prompt user to apply only if they have no successful or pending application
+        }
     }
 
     private void submitApplication(Applicant applicant) {

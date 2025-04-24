@@ -105,4 +105,12 @@ public class ApplicationRegistry {
             .filter(app -> app.getStatus() == Application.Status.BOOKED)
             .toList();
     }
+
+    public static List<Application> getApplicationsByProject(String projectName) {
+        return applicationMap.values().stream()
+            .flatMap(List::stream)
+            .filter(app -> app.getProject().getName().equalsIgnoreCase(projectName))
+            .toList();
+    }
+    
 }
