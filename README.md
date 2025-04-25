@@ -10,8 +10,8 @@
 [<img src="https://github.com/jeeezzz.png" height="20" width="20" /> Jessica Joyson](https://github.com/jeeezzz) |
 [<img src="https://github.com/j9op123-d.png" height="20" width="20" /> Quan Hui Shan Audrey](https://github.com/j9op123-d)
 
-**Docs:** [Report]() | 
-[UML Class Diagram]() |
+**Docs:** [Report](https://github.com/javiertay/SC2002/blob/main/report/SC2002%20Report.pdf) | 
+[UML Class Diagram](https://github.com/javiertay/SC2002/blob/main/report/UML%20Diagrams/SC2002%20UML%20Diagram.png) |
 [Java Docs]()
 
 A Java-based application to manage **Build-To-Order (BTO)** flat applications, featuring authentication, flat browsing and filtering, project application submission, receipt generation, and role-based operations for applicants, officers, and managers, while ensuring adherence to OOP ideas.
