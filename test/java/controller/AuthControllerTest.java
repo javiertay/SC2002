@@ -20,6 +20,21 @@ class AuthControllerTest {
 
     @BeforeEach
     void setUp() {
+        // Ensure Excel file exists for password updates
+        try {
+            java.io.File excelFile = new java.io.File("src/data/CombinedExcel.xlsx");
+            excelFile.getParentFile().mkdirs();
+            if (!excelFile.exists()) {
+                org.apache.poi.xssf.usermodel.XSSFWorkbook wb = new org.apache.poi.xssf.usermodel.XSSFWorkbook();
+                try (java.io.FileOutputStream fos = new java.io.FileOutputStream(excelFile)) {
+                    wb.write(fos);
+                }
+                wb.close();
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to create dummy Excel file for tests", e);
+        }
+
         auth = new AuthController();
         outContent = new ByteArrayOutputStream();
         System.setOut(new PrintStream(outContent));
@@ -29,7 +44,6 @@ class AuthControllerTest {
     void tearDown() {
         System.setOut(originalOut);
     }
-
 
     @Test
         // --- Scenario 1: Valid User Login ---
