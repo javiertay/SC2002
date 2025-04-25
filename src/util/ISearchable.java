@@ -1,5 +1,5 @@
 package util;
 
-public interface Searchable {
+public interface ISearchable {
     boolean matches(Filter filter);
 }

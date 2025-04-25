@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class FilterUtil {
-    public static <T extends Searchable> List<T> applyFilter(Collection<T> items, Filter filter) {
+    public static <T extends ISearchable> List<T> applyFilter(Collection<T> items, Filter filter) {
         if (filter == null || filter.isEmpty()) {
             return new ArrayList<>(items); // no filter applied
         }

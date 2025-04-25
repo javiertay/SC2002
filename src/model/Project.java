@@ -4,8 +4,8 @@ import java.time.LocalDate;
 import java.util.*;
 
 import util.Filter;
-import util.Searchable;
-public class Project implements Searchable{
+import util.ISearchable;
+public class Project implements ISearchable{
     private String name;
     private String neighborhood;
     private Map<String, FlatType> flatTypes;  // "2-Room", "3-Room"

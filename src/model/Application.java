@@ -2,10 +2,10 @@ package model;
 
 import java.time.LocalDate;
 
-import util.Searchable;
+import util.ISearchable;
 import util.Filter;
 
-public class Application implements Searchable{
+public class Application implements ISearchable{
     private Applicant applicant;
     private Project project;
     private String flatType; // "2-Room" or "3-Room"
