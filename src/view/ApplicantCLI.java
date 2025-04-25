@@ -15,6 +15,15 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Scanner;
 
+/**
+* CLI class for Applicants to interact with BTO project application features.
+* 
+* Handles project applications, enquiry management, password changes, and displays
+* a personalized dashboard with application/enquiry summaries.
+* 
+* @author Javier
+* @version 1.0
+*/
 public class ApplicantCLI {
     private final Applicant applicant;
     private final EnquiryController enquiryController;
@@ -23,6 +32,14 @@ public class ApplicantCLI {
     private final Scanner scanner;
     private Breadcrumb breadcrumb;
 
+    /**
+    * Constructs the CLI interface for the applicant.
+    *
+    * @param applicant The logged-in applicant.
+    * @param enquiryController Controller handling enquiry-related operations.
+    * @param authController Controller for user authentication and password changes.
+    * @param applicationCLI CLI for managing BTO applications.
+    */
     public ApplicantCLI(Applicant applicant, EnquiryController enquiryController, AuthController authController, ApplicationCLI applicationCLI) {
         this.applicationCLI = applicationCLI;
         this.applicant = applicant;
@@ -32,6 +49,10 @@ public class ApplicantCLI {
         this.breadcrumb = new Breadcrumb();
     }
 
+    /**
+    * Starts the applicant menu loop.
+    * Displays dashboard and allows the applicant to navigate available features.
+    */
     public void start() {
         breadcrumb.push("Applicant Menu");
         showDashboard();
@@ -57,6 +78,10 @@ public class ApplicantCLI {
         } while (choice != 0);
     }
 
+    /**
+    * Displays the applicant dashboard including application and enquiry status,
+    * and open/upcoming project counts.
+    */
     private void showMenu() {
         System.out.println("\n=== " + breadcrumb.getPath() + " ===");
         System.out.println("1. Manage HDB Applications");
@@ -65,6 +90,10 @@ public class ApplicantCLI {
         System.out.println("0. Logout");
     }
 
+    /**
+    * Launches the enquiry management submenu.
+    * Allows applicants to submit, view, edit, or delete enquiries.
+    */
     private void manageEnquiries() {
         breadcrumb.push("Enquiry Management");
         EnquiryCLI enquiryCLI = new EnquiryCLI(applicant, enquiryController, breadcrumb);
@@ -72,6 +101,16 @@ public class ApplicantCLI {
         breadcrumb.pop(); // Return to Applicant Menu after exiting Enquiry Management        
     }
 
+    /**
+    * Displays a summary dashboard for the applicant.
+    * <p>
+    * Shows:
+    * <ul>
+    *     <li>Number of pending applications</li>
+    *     <li>Number of replied enquiries</li>
+    *     <li>Total number of open and upcoming projects</li>
+    * </ul>
+    */
     private void showDashboard() {
         System.out.println("\nWelcome back " + applicant.getName() + "!");
 

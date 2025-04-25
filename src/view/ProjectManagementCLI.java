@@ -14,6 +14,23 @@ import util.Breadcrumb;
 import util.Filter;
 import util.InputUtil;
 
+/**
+* CLI interface for HDB Managers to create, view, and manage BTO projects.
+* 
+* Features:
+* <ul>
+*   <li>View all projects with optional filtering</li>
+*   <li>View and manage own created projects</li>
+*   <li>Create new projects with validation</li>
+*   <li>Edit project attributes (dates, neighborhood, slots, flats)</li>
+*   <li>Delete or toggle visibility of managed projects</li>
+* </ul>
+* 
+* Uses breadcrumbs for user navigation and shared filters by NRIC.
+* 
+* @author Javier
+* @version 1.0
+*/
 public class ProjectManagementCLI {
     private final Filter filter;
     private static final Map<String, Filter> managerFilters = new HashMap<>();
@@ -23,6 +40,14 @@ public class ProjectManagementCLI {
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d/M/yyyy");
     private Breadcrumb breadcrumb;
 
+    /**
+    * Constructs the CLI for managing BTO projects.
+    *
+    * @param manager The logged-in manager.
+    * @param managerController The controller handling project-related logic.
+    * @param scanner Scanner for user input.
+    * @param breadcrumb Navigation tracker for CLI.
+    */
     public ProjectManagementCLI(HDBManager manager, ManagerController managerController, Scanner scanner, Breadcrumb breadcrumb) {
         this.breadcrumb = breadcrumb;
         this.manager = manager;
@@ -31,6 +56,10 @@ public class ProjectManagementCLI {
         this.filter = managerFilters.computeIfAbsent(manager.getNric(), k -> new Filter());
     }
     
+    /**
+    * Starts the project management menu loop.
+    * Routes to actions like view all projects, view own projects, and create new project.
+    */
     public void start() {
         int choice;
         do {
@@ -51,6 +80,9 @@ public class ProjectManagementCLI {
         } while (choice != 0);
     }
 
+    /**
+    * Displays the main project management menu.
+    */
     private void showMenu() {
         System.out.println("\n=== " + breadcrumb.getPath() + " ===");
         System.out.println("1. View All BTO Projects");
@@ -59,6 +91,10 @@ public class ProjectManagementCLI {
         System.out.println("0. Back to Previous Menu");
     }
 
+    /**
+    * Displays all BTO projects with current filters applied.
+    * Prompts for filter setup if none exists.
+    */
     private void viewAllProjects() {
         System.out.println("\n------ Current Filters ------");
         System.out.println(" - Neighborhood: " + (filter.getNeighbourhood() != null ? filter.getNeighbourhood() : "-"));
@@ -87,6 +123,10 @@ public class ProjectManagementCLI {
         // managerController.viewAllProject(filter);
     }
 
+    /**
+    * Prompts and collects details to create a new BTO project.
+    * Validates inputs and persists the project if valid.
+    */
     private void createProject() {
         System.out.println("\n--- Creating New BTO Project (type 'cancel' at any time to abort) ---");
 
@@ -221,6 +261,12 @@ public class ProjectManagementCLI {
         managerController.createProject(p, manager);
     }
 
+    /**
+    * Opens the editing menu for a selected project.
+    * Allows updating neighborhood, dates, flat info, and officer slots.
+    *
+    * @param project The project to edit.
+    */
     private void editProjectDetails(Project project) {
         boolean editing = true;
         while (editing) {
@@ -300,6 +346,11 @@ public class ProjectManagementCLI {
         }
     }
 
+    /**
+    * Displays detailed information about the selected project.
+    *
+    * @param project The project to display.
+    */
     private void viewProjectDetails(Project project) {
         System.out.println("  Neighborhood: " + project.getNeighborhood());
         System.out.println("  Open Date: " + project.getOpenDate().format(formatter) + " | Close Date: " + project.getCloseDate().format(formatter));
@@ -313,6 +364,10 @@ public class ProjectManagementCLI {
         System.out.println("------------------------------------");
     }
 
+    /**
+    * Allows the manager to view and manage only their own created projects.
+    * Supports editing, toggling visibility, and deleting a project.
+    */
     private void viewMyProjects() {    
         while (true) {
             List<String> projectNames = manager.getManagedProjects();
@@ -359,6 +414,12 @@ public class ProjectManagementCLI {
         }
     }
 
+    /**
+    * Displays project-level management options:
+    * editing, toggling visibility, and deletion.
+    *
+    * @param project The selected project.
+    */
     private void manageProject(Project project) {
         while (true) {
             System.out.println("\n--- Managing: " + project.getName() + " ---");
@@ -390,6 +451,10 @@ public class ProjectManagementCLI {
         }
     }
     
+    /**
+    * Prompts the manager to define filter criteria (neighborhood, flat type, price).
+    * Updates the active filter for the manager.
+    */
     private void setProjectFilter() {
         System.out.println("\n== Set Project Filters ==");
 
@@ -433,6 +498,9 @@ public class ProjectManagementCLI {
         System.out.println("Filter set.");
     }
     
+    /**
+    * Prompts the user to confirm and reset all active filters.
+    */
     private void clearFilters() {
         if (!filter.isEmpty()) {
             System.out.print("Do you want to reset all filters? (Y/N): ");

@@ -7,9 +7,24 @@ import org.apache.poi.ss.usermodel.*;
 import java.io.*;
 import java.util.*;
 
+/**
+* Utility for saving user credentials, applications, projects, and enquiries
+* into an Excel file for persistence.
+* 
+* Depends on Apache POI.
+* 
+* @author Javier
+* @version 1.0
+*/
 public class ExcelWriter {
     private static final String filePath = "src/data/CombinedExcel.xlsx";
 
+    /**
+    * Creates a cell style for formatting dates as "d/M/yyyy" in Excel.
+    *
+    * @param workbook The Excel workbook to create the style for.
+    * @return The configured CellStyle.
+    */
     private static CellStyle setDateCellStyle(Workbook workbook) {
         CreationHelper createHelper = workbook.getCreationHelper();
         CellStyle dateCellStyle = workbook.createCellStyle();
@@ -17,6 +32,13 @@ public class ExcelWriter {
         return dateCellStyle;
     }
 
+    /**
+    * Updates the password of a user in the corresponding Excel sheet based on their role.
+    * The password is persisted directly into the Excel file used for login.
+    *
+    * @param user The user whose password is being updated.
+    * @param newPassword The new password to store.
+    */
     public static void updateUserPassword(User user, String newPassword) {    
         String sheetName;
 
@@ -69,6 +91,10 @@ public class ExcelWriter {
         }
     }
 
+    /**
+    * Exports all submitted applications to the "FlatBookings" sheet in the Excel file.
+    * If the sheet exists, it is cleared and rewritten with updated data.
+    */
     public static void exportApplications() {
         try (FileInputStream fis = new FileInputStream(filePath);
              Workbook workbook = WorkbookFactory.create(fis)) {
@@ -124,6 +150,10 @@ public class ExcelWriter {
         }
     }    
 
+    /**
+    * Exports all project listings to the "ProjectListings" sheet in the Excel file.
+    * Includes flat type breakdowns, officer assignments, and visibility status.
+    */
     public static void exportProjects() {
         try (FileInputStream fis = new FileInputStream(filePath);
              Workbook workbook = WorkbookFactory.create(fis)) {
@@ -210,6 +240,9 @@ public class ExcelWriter {
         }
     }
     
+    /**
+    * Exports all user enquiries and replies to the "Enquiries" sheet in the Excel file.
+    */
     public static void exportEnquiries() {
         try (FileInputStream fis = new FileInputStream(filePath);
              Workbook workbook = WorkbookFactory.create(fis)) {
@@ -257,6 +290,10 @@ public class ExcelWriter {
         }
     }
     
+    /**
+    * Performs a complete export of applications, projects, and enquiries.
+    * Called during system shutdown to persist all in-memory data.
+    */
     public static void saveData() {
         exportApplications();
         exportProjects();

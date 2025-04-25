@@ -4,6 +4,15 @@ import java.util.Set;
 
 import model.Application;
 
+/**
+* Represents a reusable set of filter criteria for searching and listing
+* projects or applications based on flat type, price, age, marital status, etc.
+* 
+* Used by FilterUtil and searchable views.
+* 
+* @author Javier
+* @version 1.0
+*/
 public class Filter {
     // Filters for projects listing
     private String flatType;
@@ -90,10 +99,18 @@ public class Filter {
         this.maxPrice = maxPrice;
     }
 
+    /**
+    * Checks if the filter is currently empty (i.e., no criteria applied).
+    *
+    * @return True if no filter criteria are set; false otherwise.
+    */
     public boolean isEmpty() {
         return flatType == null && neighbourhood == null && projectName == null && maritalStatus == null && minAge == null && maxAge == null && status == null && minPrice == null && maxPrice == null;
     }
 
+    /**
+    * Resets all filter criteria to null.
+    */
     public void clear() {
         flatType = null;
         neighbourhood = null;

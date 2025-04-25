@@ -1,6 +1,7 @@
 package controller;
 
 import model.*;
+import util.*;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -11,11 +12,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import util.*;
-
+/**
+* Handles application-related logic such as submission, withdrawal, filtering,
+* and processing for both applicants, managers, and officers.
+*
+* @author Javier 
+* @version 1.0
+*/
 public class ApplicationController {
-
-    // View all available projects for the applicant based on age and marital status
+    /**
+    * Retrieves all visible and open projects the applicant is eligible to apply for,
+    * taking into account age and marital status.
+    *
+    * @param applicant The applicant to check eligibility for.
+    * @return List of available projects the applicant can apply to.
+    */
     public List<Project> getAllAvailableProjects(Applicant applicant) {
         List<Project> projects = ProjectRegistry.filterByVisibility(true).stream()
             .filter(project -> !LocalDate.now().isAfter(project.getCloseDate()))
@@ -35,7 +46,14 @@ public class ApplicationController {
         return projects;
     }
     
-    // Submit application
+    /**
+    * Submits an application for a given project and flat type.
+    *
+    * @param applicant The applicant submitting the application.
+    * @param projectName The name of the project.
+    * @param flatType The flat type to apply for.
+    * @return True if application is successful, false otherwise.
+    */
     public boolean submitApplication(Applicant applicant, String projectName, String flatType) {
         LocalDate today = LocalDate.now();
 
@@ -92,7 +110,11 @@ public class ApplicationController {
         return true;
     }
 
-    // View current application
+    /**
+    * Displays the status of all applications submitted by the applicant.
+    *
+    * @param applicant The applicant whose applications are to be viewed.
+    */
     public void viewApplicationStatus(Applicant applicant) {
         List<Application> applications = ApplicationRegistry.getApplicationByNRIC(applicant.getNric());
         if (applications == null || applications.isEmpty()) {
@@ -125,7 +147,12 @@ public class ApplicationController {
         }
     }
 
-    // Withdraw application
+    /**
+    * Allows the applicant to request to withdraw from their most recent non-withdrawn application.
+    *
+    * @param applicant The applicant requesting withdrawal.
+    * @return True if the withdrawal request was submitted, false otherwise.
+    */
     public boolean reqToWithdrawApp(Applicant applicant) {
         List<Application> applications = ApplicationRegistry.getApplicationByNRIC(applicant.getNric());
     
@@ -164,17 +191,34 @@ public class ApplicationController {
         return true;
     }
     
-    //
+    /**
+     * Retrieves all applications submitted by a specific NRIC.
+     *
+     * @param nric The NRIC of the applicant.
+     * @return List of applications, or null if none exist.
+     */
     public List<Application> getApplicationByNRIC(String nric) {
         return ApplicationRegistry.getApplicationByNRIC(nric);
     }
 
+    /**
+    * Retrieves all applications in the system.
+    *
+    * @return A map of NRIC to their list of applications.
+    */
     public Map<String, List<Application>> getAllApplications() {
         return ApplicationRegistry.getAllApplications();
     }
 
-
     // ====== HDB Manager Functions ======
+    /**
+    * Allows a manager to approve or reject an application submitted to a project they manage.
+    *
+    * @param nric The NRIC of the applicant.
+    * @param projectName The project name.
+    * @param manager The approving/rejecting manager.
+    * @param status The target status (APPROVED/REJECTED).
+    */
     public void approveRejectApplication(String nric, String projectName, HDBManager manager, Application.Status status) {
         boolean authorized = manager.getManagedProjects().stream().anyMatch(p -> p.equalsIgnoreCase(projectName));
         if (!authorized) {
@@ -207,6 +251,13 @@ public class ApplicationController {
         System.out.println("Application for NRIC: " + nric + " in project: " + projectName + " has been " + status);
     } 
 
+    /**
+    * Approves a withdrawal request submitted by an applicant, and returns the flat unit if needed.
+    *
+    * @param manager The manager processing the withdrawal.
+    * @param nric The NRIC of the applicant.
+    * @return True if successful, false otherwise.
+    */
     public boolean approveWithdrawal(HDBManager manager, String nric) {    
         List<Application> apps = ApplicationRegistry.getApplicationByNRIC(nric);
         if (apps == null || apps.isEmpty()) {
@@ -243,7 +294,13 @@ public class ApplicationController {
         return true;
     }
     
-
+    /**
+    * Rejects a withdrawal request submitted by an applicant.
+    *
+    * @param manager The manager processing the rejection.
+    * @param nric The NRIC of the applicant.
+    * @return True if successful, false otherwise.
+    */
     public boolean rejectWithdrawal(HDBManager manager, String nric) {    
         List<Application> apps = ApplicationRegistry.getApplicationByNRIC(nric);
         if (apps == null || apps.isEmpty()) {
@@ -269,6 +326,12 @@ public class ApplicationController {
         return true;
     }
 
+    /**
+    * Applies filters to all applications and returns the matching list.
+    *
+    * @param filter The filter criteria.
+    * @return Filtered list of applications.
+    */
     public List<Application> getFilteredApplications(Filter filter) {
         List<Application> allApps = ApplicationRegistry.getAllApplications()
         .values().stream()
@@ -278,6 +341,12 @@ public class ApplicationController {
         return FilterUtil.applyFilter(allApps, filter);
     }
 
+    /**
+    * Retrieves all applications submitted to projects managed by a given manager.
+    *
+    * @param manager The manager whose projects are queried.
+    * @return List of applications under the manager's projects.
+    */
     public List<Application> getApplicationsByManager(HDBManager manager) {
         return manager.getManagedProjects().stream()
             .map(ProjectRegistry::getProjectByName)
@@ -285,13 +354,24 @@ public class ApplicationController {
             .flatMap(project -> ApplicationRegistry.getApplicationsByProject(project.getName()).stream())
             .toList();
     }
-
+    /**
+    * Retrieves pending applications for all projects managed by the given manager.
+    *
+    * @param manager The manager reviewing applications.
+    * @return List of pending applications.
+    */
     public List<Application> getPendingApplicationsByManager(HDBManager manager) {
         return getApplicationsByManager(manager).stream()
             .filter(app -> app.getStatus() == Application.Status.PENDING)
             .toList();
     }
 
+    /**
+    * Retrieves withdrawal requests for all projects managed by the given manager.
+    *
+    * @param manager The manager reviewing withdrawal requests.
+    * @return List of applications with withdrawal requested.
+    */
     public List<Application> getWithdrawalRequestsByManager(HDBManager manager) {
         return getApplicationsByManager(manager).stream()
             .filter(app -> app.isWithdrawalRequested())
@@ -299,6 +379,13 @@ public class ApplicationController {
     }    
     
     // ====== HDB Officer Functions ======
+    /**
+    * Assigns a flat to an applicant in the officer's project if the application was successful.
+    *
+    * @param officer The HDB officer assigning the flat.
+    * @param applicantNRIC The NRIC of the applicant.
+    * @return True if flat was assigned, false otherwise.
+    */
     public boolean assignFlat(HDBOfficer officer, String applicantNRIC) {
         Application application = ApplicationRegistry.getApplicationByNricAndProject(applicantNRIC, officer.getAssignedProject());
         if (application == null || application.getStatus() != Application.Status.SUCCESSFUL) {
@@ -317,10 +404,22 @@ public class ApplicationController {
         return true;
     }
 
+    /**
+    * Gets all successful (approved) applications for a given project.
+    *
+    * @param projectName The name of the project.
+    * @return List of successful applications.
+    */
     public List<Application> getSuccessfulApplicationsByProject(String projectName) {
         return ApplicationRegistry.getSuccessfulApplicationsByProject(projectName);
     }
 
+    /**
+    * Retrieves applications that have progressed to flat booking stage for a given project.
+    *
+    * @param projectName The name of the project.
+    * @return List of booked applications.
+    */
     public List<Application> getFlatBookedByProject(String projectName) {
         return ApplicationRegistry.getFlatBookedByProject(projectName);
     }

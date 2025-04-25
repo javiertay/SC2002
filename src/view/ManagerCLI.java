@@ -10,6 +10,21 @@ import util.InputUtil;
 import java.util.List;
 import java.util.Scanner;
 
+/**
+* CLI interface for HDB Managers.
+* 
+* Allows managers to manage projects, applications, officer registrations,
+* and respond to enquiries. Also displays a dashboard with pending items upon login.
+* 
+* Features:
+* - Access to Project and Application Management Hubs
+* - Officer registration approval
+* - Enquiry viewing and response
+* - Password change functionality
+* 
+* @author Javier
+* @version 1.0
+*/
 public class ManagerCLI {
     private final HDBManager manager;
     private final ManagerController managerController;
@@ -19,6 +34,15 @@ public class ManagerCLI {
     private final Scanner scanner;
     private Breadcrumb breadcrumb;
 
+    /**
+    * Constructs the ManagerCLI with necessary controllers and components.
+    *
+    * @param manager The logged-in HDB manager.
+    * @param managerController Controller for manager-specific operations.
+    * @param authController Controller handling authentication and password updates.
+    * @param enquiryController Controller for managing enquiries.
+    * @param applicationManagementCLI CLI for managing applications.
+    */
     public ManagerCLI(HDBManager manager, ManagerController managerController, AuthController authController, EnquiryController enquiryController, ApplicationManagementCLI applicationManagementCLI) {
         this.manager = manager;
         this.managerController = managerController;
@@ -29,6 +53,10 @@ public class ManagerCLI {
         this.breadcrumb = new Breadcrumb();
     }
 
+    /**
+    * Starts the main manager menu loop.
+    * Displays dashboard and handles user selection routing.
+    */
     public void start() {
         breadcrumb.push("HDB Manager Menu");
         showDashboard();
@@ -61,6 +89,9 @@ public class ManagerCLI {
         } while (choice != 0);
     }
 
+    /**
+    * Displays the manager's main menu options.
+    */
     private void showMenu() {
         System.out.println("\n=== " + breadcrumb.getPath() + " ===");
         System.out.println("1. HDB Project Management Hub");
@@ -71,6 +102,11 @@ public class ManagerCLI {
         System.out.println("0. Logout");
     }
 
+    /**
+    * Handles the officer registration approval flow.
+    * Allows the manager to approve or reject pending officer applications
+    * for their assigned projects.
+    */
     private void approveOfficerRegistration() {
         // managerController.getAllOfficersByStatus();
         List<HDBOfficer> pendingOfficers = managerController.getPendingOfficerApplications(manager);
@@ -101,6 +137,9 @@ public class ManagerCLI {
         }
     }
 
+    /**
+    * Routes the manager to the enquiry management interface.
+    */
     private void manageEnquiries() {
         breadcrumb.push("Manager Enquiry Hub");
         EnquiryCLI enquiryCLI = new EnquiryCLI(manager, enquiryController, breadcrumb);
@@ -108,20 +147,45 @@ public class ManagerCLI {
         breadcrumb.pop(); // Return to Manager Menu after exiting Enquiry Hub
     }
 
+    /**
+    * Displays a dashboard summary for the manager upon login.
+    * <p>
+    * Shows:
+    * <ul>
+    *     <li>Number of pending applications</li>
+    *     <li>Number of withdrawal requests</li>
+    *     <li>Number of officer registrations</li>
+    *     <li>Number of enquiries (total and replied)</li>
+    * </ul>
+    * Provides a quick overview of outstanding tasks across all managed projects.
+    */
     private void showDashboard() {
-        List<Application> applications = ApplicationRegistry.getAllApplications().values().stream().flatMap(List::stream)
-                                                                .filter(app -> app.getProject().getManagerName().equalsIgnoreCase(manager.getName()))
-                                                                .filter(app -> app.getStatus() == Application.Status.PENDING).toList();
+        List<String> managedProjects = manager.getManagedProjects();
+
+        List<Application> applications = ApplicationRegistry.getAllApplications()
+            .values().stream()
+            .flatMap(List::stream)
+            .filter(app -> managedProjects.contains(app.getProject().getName()))
+            .filter(app -> app.getStatus() == Application.Status.PENDING)
+            .toList();
+
         int pendingAppCount = applications.size();
 
         List<Application> withdrawalRequests = ApplicationRegistry.getAllApplications()
-        .values().stream().flatMap(List::stream).filter(app -> app.isWithdrawalRequested()).filter(app -> manager.getManagedProjects().stream().anyMatch(p -> p.equalsIgnoreCase(app.getProject().getName()))).toList();
+            .values().stream()
+            .flatMap(List::stream)
+            .filter(app -> managedProjects.contains(app.getProject().getName()))
+            .filter(Application::isWithdrawalRequested)
+            .toList();
+
         int pendingWithdrawals = withdrawalRequests.size();
 
         List<HDBOfficer> officers = managerController.getPendingOfficerApplications(manager);
         int pendingOfficerApprovalCount = officers.size();
 
-        List<Enquiry> enquiries = enquiryController.getProjectEnquiries(manager.getAssignedProject());
+        List<Enquiry> enquiries = managedProjects.stream()
+            .flatMap(projectName -> enquiryController.getProjectEnquiries(projectName).stream())
+            .toList();
         int totalEnquiries = enquiries.size();
 
         System.out.println("\nWelcome back " + manager.getName() + "!");

@@ -17,6 +17,15 @@ import java.util.Scanner;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+* CLI interface for managing BTO applications.
+* <p>
+* Used by both HDB Officers and HDB Managers. Officers handle flat selection and
+* receipt generation, while managers handle approvals, withdrawals, and reporting.
+* 
+* @author Javier
+* @version 1.0
+*/
 public class ApplicationManagementCLI {
     private final Filter filter;
     private final ApplicationController applicationController;
@@ -27,6 +36,13 @@ public class ApplicationManagementCLI {
     private final Scanner scanner = new Scanner(System.in);
     private Breadcrumb breadcrumb;
 
+    /**
+    * Constructs the CLI for HDB Managers to manage applications.
+    *
+    * @param manager The logged-in HDB Manager.
+    * @param applicationController The controller handling application data.
+    * @param userFilters Shared filter map per user (by NRIC).
+    */
     public ApplicationManagementCLI(HDBManager manager, ApplicationController applicationController, Map<String, Filter> userFilters) {
         this.manager = manager;
         this.officer = null;
@@ -36,6 +52,13 @@ public class ApplicationManagementCLI {
         this.filter = userFilters.computeIfAbsent(manager.getNric(), k -> new Filter());
     }
 
+    /**
+    * Constructs the CLI for HDB Officers to assign flats and generate receipts.
+    *
+    * @param officer The logged-in HDB Officer.
+    * @param applicationController The controller handling application data.
+    * @param officerController The controller handling officer logic.
+    */
     public ApplicationManagementCLI(HDBOfficer officer, ApplicationController applicationController, OfficerController officerController) {
         this.officer = officer;
         this.manager = null;
@@ -45,10 +68,18 @@ public class ApplicationManagementCLI {
         this.filter = null;
     }
 
+    /**
+    * Sets the breadcrumb for CLI navigation.
+    *
+    * @param breadcrumb The breadcrumb instance to track navigation.
+    */
     public void setBreadcrumb(Breadcrumb breadcrumb) {
         this.breadcrumb = breadcrumb;
     }
 
+    /**
+    * Launches the main application management flow based on role.
+    */
     public void start() {
         if (officer != null) {
             officerManagement();
@@ -57,6 +88,10 @@ public class ApplicationManagementCLI {
         }
     }
 
+    /**
+    * Displays the menu and handles officer-specific operations:
+    * flat assignment and receipt generation.
+    */
     private void officerManagement() {
         int choice;
         do {
@@ -72,6 +107,9 @@ public class ApplicationManagementCLI {
         } while (choice != 0);
     }
 
+    /**
+    * Prints the officer-facing menu.
+    */
     private void officerMenu() {
         System.out.println("\n======Application Management======");
         System.out.println("1. Flat Selection");
@@ -79,6 +117,9 @@ public class ApplicationManagementCLI {
         System.out.println("0. Back to Previous Menu");
     }
 
+    /**
+    * Lets the officer assign flats to successful applicants from their project.
+    */
     private void flatSelectionWorkflow() {
         List<Application> pending = applicationController.getSuccessfulApplicationsByProject(projectName);
 
@@ -105,6 +146,9 @@ public class ApplicationManagementCLI {
         officerController.assignFlatToApplicant(officer, applicantNric);
     }
 
+    /**
+    * Generates a receipt for a flat-booked application.
+    */
     private void generateReceipt() {
         List<Application> successful = applicationController.getFlatBookedByProject(projectName);
 
@@ -137,6 +181,10 @@ public class ApplicationManagementCLI {
 
     }
 
+    /**
+    * Displays the menu and handles manager-specific operations:
+    * approving/rejecting applications, approving withdrawals, and generating reports.
+    */
     private void managerManagement() {
         int choice; 
         do {
@@ -154,6 +202,9 @@ public class ApplicationManagementCLI {
         } while (choice != 0);
     }
 
+    /**
+    * Prints the manager-facing menu.
+    */
     private void printManagerMenu() {
         System.out.println("\n=== " + breadcrumb.getPath() + " ===");
         System.out.println("1. View all Applications for your Project");
@@ -163,6 +214,9 @@ public class ApplicationManagementCLI {
         System.out.println("0. Back to Previous Menu");
     }
 
+    /**
+    * Displays all applications under the manager's handled projects.
+    */
     private void viewAllApplicationsForProject() {
         List<Application> apps = applicationController.getApplicationsByManager(manager);
     
@@ -187,6 +241,9 @@ public class ApplicationManagementCLI {
         TableUtil.printTable(headers, rows);
     }    
 
+    /**
+    * Allows the manager to approve or reject pending applications.
+    */
     private void processApplication() {   
         List<Application> pending = applicationController.getPendingApplicationsByManager(manager);
 
@@ -221,6 +278,9 @@ public class ApplicationManagementCLI {
         applicationController.approveRejectApplication(nric, projectName, manager, status);
     }
 
+    /**
+    * Handles approval or rejection of withdrawal requests.
+    */
     private void approveWithdrawal() {
         List<Application> requests = applicationController.getWithdrawalRequestsByManager(manager);
 
@@ -255,6 +315,9 @@ public class ApplicationManagementCLI {
         }
     }
 
+    /**
+    * Displays a summary report of applications that have completed flat booking.
+    */
     private void generateReport() {
         System.out.println("\n-------------------------");
         System.out.println("Current Application Filters:");
@@ -299,6 +362,10 @@ public class ApplicationManagementCLI {
         printReport(result);
     }
 
+    /**
+    * Prompts the user for filter inputs such as marital status, flat type, project names,
+    * age range, and application status. Updates the shared filter object accordingly.
+    */
     private void collectApplicationFilterInput() {
         System.out.println("\n=== Filter Aplications by: ===");
 
@@ -362,6 +429,12 @@ public class ApplicationManagementCLI {
         System.out.println("Application filters updated.");
     }
 
+    /**
+    * Prints a formatted table displaying details of all applications in the given list.
+    * Includes applicant information, flat type, project name, and application status.
+    *
+    * @param result the list of applications to display in the report
+    */
     private void printReport(List<Application> result) {
        System.out.println("\n=== Filtered Application Report ===");
 
@@ -384,6 +457,10 @@ public class ApplicationManagementCLI {
         TableUtil.printTable(headers, rows);
     }
 
+    /**
+    * Asks the user whether to reset all active filters.
+    * If confirmed, clears the shared filter object and prints confirmation.
+    */
     private void clearFilters() {
         if (!filter.isEmpty()) {
             System.out.print("Do you want to reset all filters? (Y/N): ");

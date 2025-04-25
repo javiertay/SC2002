@@ -11,22 +11,51 @@ import controller.ApplicationController;
 import model.*;
 import util.*;
 
+/**
+* Handles the applicant's interaction with BTO project applications.
+* Applicants can view available projects, submit applications, check their application status,
+* or withdraw an existing application.
+* 
+* Filtering and table display are supported for better navigation.
+* 
+* @author Javier
+* @version 1.0
+*/
 public class ApplicationCLI {
     private final ApplicationController applicationController;
     private final Filter filter;
     private final Scanner scanner;
     private Breadcrumb breadcrumb;
 
+    /**
+    * Constructs a CLI interface for applicants to manage their BTO applications.
+    * Initializes a shared filter object based on the applicant's NRIC.
+    *
+    * @param applicationController Controller that manages application logic.
+    * @param nric The NRIC of the current applicant (used to retrieve or create their filter).
+    * @param userFilters Shared map of filters by NRIC.
+    */
     public ApplicationCLI(ApplicationController applicationController, String nric, Map<String, Filter> userFilters) {
         this.applicationController = applicationController;
         this.filter = userFilters.computeIfAbsent(nric, k -> new Filter());
         this.scanner = new Scanner(System.in);
     }    
 
+    /**
+    * Sets the breadcrumb object to display navigation context.
+    *
+    * @param breadcrumb The Breadcrumb instance to use.
+    */
     public void setBreadcrumb(Breadcrumb breadcrumb) {
         this.breadcrumb = breadcrumb;
     }
 
+    /**
+    * Starts the applicant application loop.
+    * Allows users to view projects, check status, or withdraw application.
+    *
+    * @param applicant The logged-in applicant.
+    */
     public void start(Applicant applicant) {
         int choice;
         do {
@@ -47,6 +76,9 @@ public class ApplicationCLI {
         } while (choice != 0);
     }
 
+    /**
+    * Displays the application management menu options.
+    */
     private void showMenu() {
         System.out.println("\n=== " + breadcrumb.getPath() + " ===");
         System.out.println("1. View Available Projects");
@@ -55,6 +87,12 @@ public class ApplicationCLI {
         System.out.println("0. Back to Previous Menu");
     }
 
+    /**
+    * Displays a list of all visible BTO projects the applicant is eligible to apply for.
+    * Prompts for filtering and allows submission if the user has no active application.
+    *
+    * @param applicant The logged-in applicant.
+    */
     private void viewAllAvailableProject(Applicant applicant){
         List<Project> visibleProjects = applicationController.getAllAvailableProjects(applicant);
 
@@ -105,6 +143,12 @@ public class ApplicationCLI {
         }
     }
 
+    /**
+    * Handles the application submission flow.
+    * Ensures only eligible applicants apply for valid and available projects.
+    *
+    * @param applicant The logged-in applicant.
+    */
     private void submitApplication(Applicant applicant) {
         Project project = null;
         String projectName = null;
@@ -167,10 +211,20 @@ public class ApplicationCLI {
         System.out.println(success ? "Application process submitted! Pending Approval." : "Application failed. Please try again.");
     }
 
+    /**
+    * Displays the status of the applicant’s latest application.
+    *
+    * @param applicant The logged-in applicant.
+    */
     private void viewApplicationStatus(Applicant applicant) {
         applicationController.viewApplicationStatus(applicant);
     }
 
+    /**
+    * Handles withdrawal of the applicant’s current active application.
+    *
+    * @param applicant The logged-in applicant.
+    */
     private void withdrawApplication(Applicant applicant) {
         if (ApplicationRegistry.getApplicationByNRIC(applicant.getNric()) == null) {
             System.out.println("You have no application to withdraw.");
@@ -186,6 +240,10 @@ public class ApplicationCLI {
         }
     }
 
+    /**
+    * Prompts the user to input filter criteria such as neighborhood, flat type,
+    * and price range for project viewing.
+    */
     private void setProjectFilter() {
         System.out.println("\n== Set Project Filters ==");
 
@@ -229,6 +287,9 @@ public class ApplicationCLI {
         System.out.println("Filter set.");
     }
     
+    /**
+    * Prompts the user to reset all filters used for project viewing.
+    */
     private void clearFilters() {
         if (!filter.isEmpty()) {
             System.out.print("Do you want to reset all filters? (Y/N): ");
@@ -240,6 +301,4 @@ public class ApplicationCLI {
             }
         }
     }
-    
-    
 }

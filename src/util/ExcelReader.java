@@ -10,6 +10,15 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.*;
 
+/**
+* Utility for reading user, project, application, and enquiry data from an Excel file.
+* Populates in-memory registries on application startup.
+* 
+* Depends on Apache POI.
+* 
+* @author Javier
+* @version 1.0
+*/
 public class ExcelReader {
 
     public static class ExcelData {
@@ -20,7 +29,16 @@ public class ExcelReader {
         public final List<Application> applications;
         public final List<Enquiry> enquiries;
 
-
+        /**
+        * Constructs an {@code ExcelData} object containing all loaded data from the Excel file.
+        *
+        * @param applicants   List of loaded applicants.
+        * @param officers     List of loaded HDB officers.
+        * @param managers     List of loaded HDB managers.
+        * @param projects     List of loaded BTO projects.
+        * @param applications List of loaded flat applications.
+        * @param enquiries    List of loaded enquiries.
+        */
         public ExcelData(List<Applicant> applicants, List<HDBOfficer> officers,
                          List<HDBManager> managers, List<Project> projects,
                          List<Application> applications, List<Enquiry> enquiries) {
@@ -33,6 +51,12 @@ public class ExcelReader {
         }
     }
 
+    /**
+    * Loads all relevant sheets from the given Excel file and parses them into lists.
+    *
+    * @param filePath Path to the Excel file.
+    * @return A populated ExcelData object containing all loaded records.
+    */
     public static ExcelData loadAllData(String filePath) {
         try (FileInputStream fis = new FileInputStream(filePath);
              Workbook workbook = new XSSFWorkbook(fis)) {
@@ -60,7 +84,12 @@ public class ExcelReader {
         }
     }
 
-    // Load Applicants
+    /**
+    * Loads applicants from the given Excel sheet.
+    *
+    * @param sheet The Excel sheet containing applicant data.
+    * @return A list of applicants.
+    */
     public static List<Applicant> loadApplicants(Sheet sheet) {
         if (sheet == null) {
             System.out.println("Sheet not found in Excel. Skipping.");
@@ -84,7 +113,12 @@ public class ExcelReader {
         return applicants;
     }
 
-    // Load HDB Officers
+    /**
+    * Loads HDB officers from the given Excel sheet.
+    *
+    * @param sheet The Excel sheet containing officer data.
+    * @return A list of HDB officers.
+    */
     public static List<HDBOfficer> loadOfficers(Sheet sheet) {
         if (sheet == null) {
             System.out.println("Sheet not found in Excel. Skipping.");
@@ -107,7 +141,12 @@ public class ExcelReader {
         return officers;
     }
 
-    // Load HDB Managers
+    /**
+    * Loads HDB managers from the given Excel sheet.
+    *
+    * @param sheet The Excel sheet containing manager data.
+    * @return A list of HDB managers.
+    */
     public static List<HDBManager> loadManagers(Sheet sheet) {
         if (sheet == null) {
             System.out.println("Sheet not found in Excel. Skipping.");
@@ -131,7 +170,12 @@ public class ExcelReader {
         return managers;
     }
 
-    // Load Projects
+    /**
+    * Loads housing projects from the given Excel sheet.
+    *
+    * @param sheet The Excel sheet containing project data.
+    * @return A list of projects.
+    */
     public static List<Project> loadProjects(Sheet sheet) {
         if (sheet == null) {
             System.out.println("ProjectListing sheet not found in Excel. Skipping.");
@@ -185,7 +229,15 @@ public class ExcelReader {
         return projects;
     }
 
-    // load applications
+    /**
+    * Loads applications from the given sheet using reference lists for applicants, officers, and projects.
+    *
+    * @param sheet The Excel sheet containing application data.
+    * @param applicants The list of applicants to match against.
+    * @param officers The list of officers to match against.
+    * @param projects The list of projects to match against.
+    * @return A list of applications.
+    */
     public static List<Application> loadApplications(Sheet sheet, List<Applicant> applicants, List<HDBOfficer> officers, List<Project> projects) {
         if (sheet == null) {
             System.out.println("Application sheet not found in Excel. Skipping.");
@@ -238,6 +290,12 @@ public class ExcelReader {
         return applications;
     }
     
+    /**
+    * Loads enquiries from the given Excel sheet.
+    *
+    * @param sheet The Excel sheet containing enquiry data.
+    * @return A list of enquiries.
+    */
     public static List<Enquiry> loadEnquiries(Sheet sheet) {
         if (sheet == null) {
             System.out.println("Enquiries sheet not found in Excel. Skipping.");
@@ -271,7 +329,16 @@ public class ExcelReader {
         return enquiries;
     }
     
-    // safeguard for numeric cell values
+    /**
+    * Safely extracts an integer value from a numeric or string cell.
+    * <p>
+    * Accepts both numeric and string types. If the cell is null or contains
+    * non-numeric content, a {@code NumberFormatException} is thrown.
+    *
+    * @param cell The Excel cell to extract the numeric value from.
+    * @return The extracted integer value.
+    * @throws NumberFormatException If the cell is null or contains invalid content.
+    */
     private static int getSafeNumericCellValue(Cell cell) throws NumberFormatException {
         if (cell == null) throw new NumberFormatException("Cell is null");
     

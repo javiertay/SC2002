@@ -10,7 +10,32 @@ import model.*;
 import util.*;
 import view.*;
 
+/**
+* Entry point of the BTO application system.
+* <p>
+* This class is responsible for:
+* <ul>
+*   <li>Loading data from Excel into in-memory registries</li>
+*   <li>Instantiating controllers and launching role-specific CLI interfaces</li>
+*   <li>Persisting data on shutdown using ExcelWriter</li>
+* </ul>
+* 
+* Roles supported:
+* <ul>
+*   <li>Applicant</li>
+*   <li>HDB Officer</li>
+*   <li>HDB Manager</li>
+* </ul>
+* 
+* @author Javier 
+* @version 1.0
+*/
 public class MainApp {
+    /**
+    * Initializes the system, loads data, and routes users to their respective role-based CLIs.
+    *
+    * @param args Command-line arguments (not used).
+    */ 
     public static void main(String[] args) {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             ExcelWriter.saveData();
@@ -66,6 +91,16 @@ public class MainApp {
         sc.close();
     }
 
+    /**
+    * Loads users, projects, enquiries, and applications from an Excel file and assigns them
+    * to the relevant registries and user roles.
+    * <p>
+    * Also handles automatic project assignment and visibility updates based on project status.
+    *
+    * @param authController The authentication controller to register users with.
+    * @param path           The path to the Excel file.
+    * @return True if data loading was successful; false otherwise.
+    */
     private static boolean loadData(AuthController authController, String path) {
         ExcelReader.ExcelData data = ExcelReader.loadAllData(path);
         if (data == null) {

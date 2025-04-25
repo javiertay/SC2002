@@ -10,13 +10,35 @@ import model.Enquiry;
 import model.FlatType;
 import model.Project;
 
+/**
+* Utility for rendering formatted CLI tables with pagination support.
+* Used to display projects, enquiries, and applications in a tabular format.
+* 
+* Also handles ANSI-safe printing and formatting options.
+* 
+* @author Javier
+* @version 1.0
+*/
 public class TableUtil {
     private static final Pattern ANSI_PATTERN = Pattern.compile("\u001B\\[[;\\d]*m");
 
+    /**
+    * Removes ANSI escape codes from a string to compute correct length for formatting.
+    *
+    * @param input The string possibly containing ANSI codes.
+    * @return The plain string with ANSI codes removed.
+    */
     private static String stripAnsi(String input) {
         return ANSI_PATTERN.matcher(input).replaceAll("");
     }
 
+    /**
+    * Displays a paginated, formatted table using the given headers and row data.
+    * Automatically adjusts column widths and supports ANSI coloring.
+    *
+    * @param headers The list of column headers.
+    * @param rows The row data, where each row is a list of strings.
+    */
     public static void printTable(List<String> headers, List<List<String>> rows) {
         final int pageSize = 5;
         int totalPages = (int) Math.ceil((double) rows.size() / pageSize);
@@ -81,6 +103,14 @@ public class TableUtil {
         }
     }
 
+    /**
+    * Displays a filtered table of available projects for an applicant.
+    * Filters by flat type, price range, and applicant eligibility.
+    *
+    * @param projects The list of projects to display.
+    * @param applicant The applicant viewing the projects.
+    * @param filter Optional filter to apply.
+    */
     public static void printProjectTable(List<Project> projects, Applicant applicant, Filter filter) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d/M/yyyy");
         List<String> headers = List.of("Project Name", "Neighborhood", "Open Date", "Close Date", "Flat Breakdown", "Status");
@@ -143,6 +173,13 @@ public class TableUtil {
         printTable(headers, rows); // Assuming this is your generic method
     }
 
+    /**
+    * Displays a filtered table of all projects for managers and officers.
+    * Shows flat types, visibility, assigned officers, and slot availability.
+    *
+    * @param projects The list of projects to display.
+    * @param filter Optional filter to apply.
+    */
     public static void printProjectTable(List<Project> projects, Filter filter) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d/M/yyyy");
         List<String> headers = List.of("Name", "Neighborhood", "Open Date", "Close Date", "Manager", "Visibility", "Flat Type", "Units Left", "Price", "Officer Slots", "Officers");
@@ -187,6 +224,12 @@ public class TableUtil {
         TableUtil.printTable(headers, rows);
     }
 
+    /**
+    * Displays a table of enquiries submitted by users, showing message previews,
+    * reply status, and project information.
+    *
+    * @param enquiries The list of enquiries to display.
+    */
     public static void printEnquiryTable(List<Enquiry> enquiries) {
         if (enquiries == null || enquiries.isEmpty()) {
             System.out.println("No enquiries to display.");

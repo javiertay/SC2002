@@ -14,6 +14,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 
+/**
+* CLI interface for HDB Officers in the Build-To-Order Management System.
+* 
+* Provides functionality for:
+* <ul>
+*   <li>Viewing and applying to manage BTO projects</li>
+*   <li>Managing assigned project details</li>
+*   <li>Assigning flats and generating receipts</li>
+*   <li>Managing enquiries and changing passwords</li>
+* </ul>
+* Displays a personalized dashboard upon login showing project and task summary.
+* 
+* @author Javier
+* @version 1.0
+*/
 public class OfficerCLI {
     private final HDBOfficer officer;
     private final AuthController authController;
@@ -24,6 +39,16 @@ public class OfficerCLI {
     private final Scanner scanner;
     private Breadcrumb breadcrumb;
 
+    /**
+    * Constructs the CLI for the logged-in officer and sets up required controllers.
+    *
+    * @param officer The logged-in HDB officer.
+    * @param officerController Controller for officer-specific operations.
+    * @param authController Authentication controller for password management.
+    * @param enquiryController Controller for managing enquiries.
+    * @param applicationCLI CLI for managing applications.
+    * @param applicationController Controller for application logic.
+    */
     public OfficerCLI(HDBOfficer officer, OfficerController officerController, AuthController authController, EnquiryController enquiryController, ApplicationCLI applicationCLI, ApplicationController applicationController) {
         this.officer = officer;
         this.officerController = officerController;
@@ -35,6 +60,10 @@ public class OfficerCLI {
         this.breadcrumb = new Breadcrumb();
     }
 
+    /**
+    * Starts the CLI menu for the officer.
+    * Displays the dashboard and routes to available features based on role and project status.
+    */
     public void start() {
         breadcrumb.push("HDB Officer Menu");
         showDashboard();
@@ -73,6 +102,10 @@ public class OfficerCLI {
         } while (choice != 0);
     }
 
+    /**
+    * Displays the main officer menu with options for registration, flat assignment,
+    * enquiry handling, password change, and logout.
+    */
     private void showMenu() {
         System.out.println("\n=== " + breadcrumb.getPath() + " ===");
         System.out.println("1. Manage HDB Applications");
@@ -92,12 +125,18 @@ public class OfficerCLI {
         System.out.println("0. Logout");
     }
 
+    /**
+    * Prompts the officer to register for a specific project by name.
+    */
     private void registerForProject() {
         System.out.print("Enter Project Name to register: ");
         String projectName = scanner.nextLine().trim();
         officerController.reqToHandleProject(officer, projectName);
     }
 
+    /**
+    * Displays all officer registration statuses for projects they've applied to.
+    */
     private void viewRegistrationStatus() {
         Map<String, RegistrationStatus> registrations = officer.getAllRegistrations();
         if (registrations.isEmpty()) {
@@ -110,6 +149,9 @@ public class OfficerCLI {
                 System.out.println("- Project: " + project + " | Status: " + status));
     }
 
+    /**
+    * Displays details of the project currently assigned to the officer.
+    */
     private void viewAssignedProjectDetails() {
         if (!officer.isAssigned()) {
             System.out.println("You are not assigned to any project yet.");
@@ -132,6 +174,9 @@ public class OfficerCLI {
                 System.out.println("- " + type + " ($"+flat.getPrice()+"): " + flat.getRemainingUnits() + " units available"));
     }
 
+    /**
+    * Opens the enquiry management interface for the officer.
+    */
     private void manageEnquiries() {
         breadcrumb.push("Officer Enquiry Hub");
         EnquiryCLI enquiryCLI = new EnquiryCLI(officer, enquiryController, breadcrumb);
@@ -139,6 +184,11 @@ public class OfficerCLI {
         breadcrumb.pop(); // Return to Officer Menu after exiting Enquiry Management Hub
     }
 
+    /**
+    * Validates if the officer has been assigned to a project before allowing certain actions.
+    *
+    * @return True if assigned, false otherwise.
+    */
     private boolean isActionAllowed() {
         if (!officer.isAssigned()) {
             System.out.println("You are not assigned to any project yet.");
@@ -147,6 +197,19 @@ public class OfficerCLI {
         return true;
     }
 
+    /**
+    * Displays a personalized dashboard summary for the logged-in officer.
+    * <p>
+    * Shows:
+    * <ul>
+    *   <li>Most recent application and its status (if any)</li>
+    *   <li>Enquiry reply status (if any)</li>
+    *   <li>Number of open and upcoming projects</li>
+    *   <li>Assigned project name (if assigned)</li>
+    *   <li>Number of applications pending booking</li>
+    *   <li>Number of enquiries awaiting reply</li>
+    * </ul>
+    */
     private void showDashboard() {
         System.out.println("\nWelcome back " + officer.getName() + "!");
 

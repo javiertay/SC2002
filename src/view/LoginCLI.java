@@ -6,16 +6,40 @@ import java.io.Console;
 import java.util.Scanner;
 import model.User;
 
+/**
+* Handles the login interface for users in the Build-To-Order Management System.
+* Prompts users for their NRIC and password, validates credentials,
+* and handles authentication logic including retry attempts.
+* 
+* Also provides a welcome screen on program startup.
+* 
+* @author Javier
+* @author Qi Ming
+* @version 1.0
+*/
 public class LoginCLI {
     private final AuthController authController;
     private final Scanner scanner;
     private final String NRIC_REGEX = "^[ST]\\d{7}[A-Z]$";
 
+    /**
+    * Constructs a LoginCLI with the specified authentication controller and scanner.
+    *
+    * @param authController The authentication controller to validate users.
+    * @param scanner The scanner to read user input from console.
+    */
     public LoginCLI(AuthController authController, Scanner scanner) {
         this.authController = authController;
         this.scanner = scanner;
     }
 
+    /**
+    * Prompts the user to log in with NRIC and password.
+    * Validates NRIC format and checks credentials using the AuthController.
+    * Allows up to 3 password attempts before aborting login.
+    *
+    * @return The authenticated {@code User}, or {@code null} if login fails or is exited.
+    */
     public User promptLogin() {
         System.out.print("Enter NRIC (or 'exit'): ");
         String nric = scanner.nextLine().trim().toUpperCase();
@@ -69,6 +93,9 @@ public class LoginCLI {
         return promptLogin();
     }
     
+    /**
+    * Displays the welcome banner for the Build-To-Order Management System.
+    */
     public void welcomeScreen(){
         System.out.println("╔═════════════════════════════════════════════════════════════════════════════════════════════════════╗");
         System.out.println("║                          ███████╗  ████████╗  ██████╗  ███╗   ███╗ ███████╗                         ║");

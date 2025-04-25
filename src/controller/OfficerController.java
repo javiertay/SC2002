@@ -5,13 +5,34 @@ import java.util.Map;
 
 import model.*;
 
+/**
+* Controller for handling actions available to HDB Officers, including project registration,
+* registration status checks, project viewing, flat assignment, and receipt generation.
+*
+* @author Javier 
+* @version 1.0
+*/
 public class OfficerController {
     private final ApplicationController applicationController;
 
+    /**
+    * Constructs the OfficerController with access to the application controller.
+    *
+    * @param applicationController The application controller used to handle assignments and queries.
+    */
     public OfficerController(ApplicationController applicationController) {
         this.applicationController = applicationController;
     }
 
+    /**
+    * Allows an officer to register to handle a specific project.
+    * Officer cannot register if they already have an active registration for an ongoing project,
+    * or if they have applied as an applicant for the same project.
+    *
+    * @param officer The officer requesting to register.
+    * @param projectName The name of the project.
+    * @return True if registration was successful; false otherwise.
+    */
     public boolean reqToHandleProject(HDBOfficer officer, String projectName) {
         projectName = ProjectRegistry.getNormalizedProjectName(projectName);
         // Check if officer has ANY active registration (PENDING or APPROVED)
@@ -53,23 +74,48 @@ public class OfficerController {
         return true;
     }
 
+    /**
+    * Returns the registration status of the officer for a specific project.
+    *
+    * @param officer The officer to query.
+    * @param projectName The project name to check.
+    * @return The registration status for the specified project.
+    */
     public HDBOfficer.RegistrationStatus viewRegistrationStatus(HDBOfficer officer, String projectName) {
         return officer.getRegistrationStatus(projectName);
     }
 
+    /**
+    * Returns the project object that the officer is currently assigned to.
+    *
+    * @param officer The officer requesting project details.
+    * @return The assigned project, or null if not found.
+    */
     public Project viewAssignedProjectDetails(HDBOfficer officer) {
         String projectName = officer.getAssignedProject();
         return ProjectRegistry.getProjectByName(projectName);
     }
 
-    // Flat selection: update applicant profile and project flat availability
+    /**
+    * Assigns a flat to a successful applicant under the officer's project.
+    * Also triggers receipt generation.
+    *
+    * @param officer The officer performing the assignment.
+    * @param applicantNric The NRIC of the applicant.
+    */
     public void assignFlatToApplicant(HDBOfficer officer, String applicantNric) {
         if (applicationController.assignFlat(officer, applicantNric)) {
             generateReceipt(officer, applicantNric);
         }
     }
 
-    // Generate flat booking receipt
+    /**
+    * Generates a receipt for a flat booking made by a specified applicant.
+    * Confirms the application exists and belongs to the officer’s assigned project.
+    *
+    * @param officer The officer generating the receipt.
+    * @param applicantNric The NRIC of the applicant.
+    */
     public void generateReceipt(HDBOfficer officer, String applicantNric) {
         Application application = ApplicationRegistry.getApplicationByNricAndProject(applicantNric, officer.getAssignedProject());
     
