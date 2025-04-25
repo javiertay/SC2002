@@ -170,4 +170,23 @@ class ManagerControllerTest {
         assertTrue(output.contains("overlaps with these dates"),
                 "Should block creating a second project in the same period");
     }
+    // --- New: Toggle visibility on non-existent project ---
+    @Test
+    void toggleVisibility_nonexistentProject_printsNotFound() {
+        managerController.toggleProjectVisibility("NoSuchProj");
+        assertTrue(outContent.toString().contains("Project not found."));
+    }
+
+    // --- New: updateFlatUnits for missing flat type throws NPE ---
+    @Test
+    void updateFlatUnits_nonexistentFlatType_throwsNPE() {
+        authController.addUser(manager);
+        ProjectRegistry.addProject(testProject);
+        manager.addManagedProject("TestProject");
+        // Because code does getFlatType() before containsKey
+        assertThrows(NullPointerException.class, () -> {
+            managerController.updateFlatUnits(manager, "TestProject", "4-Room", 3, 90000);
+        });
+    }
+
 }

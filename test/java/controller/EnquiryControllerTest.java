@@ -107,4 +107,26 @@ class EnquiryControllerTest {
         assertFalse(enquiryController.replyToEnquiry(id, "Nope", other));
         assertTrue(outContent.toString().contains("You can only reply to enquiries for your assigned project."));
     }
+    // --- New: Delete enquiry with wrong NRIC ---
+    @Test
+    void deleteEnquiry_wrongSender_returnsFalse() {
+        enquiryController.submitEnquiry(applicant.getNric(), "ProjA", "Hi?");
+        int id = EnquiryRegistry.getEnquiriesByUser(applicant.getNric()).get(0).getEnquiryId();
+        // wrong NRIC
+        boolean ok = enquiryController.deleteEnquiry(id, "S9999999Z");
+        assertFalse(ok);
+        // entry should still exist
+        assertNotNull(EnquiryRegistry.getById(id));
+    }
+
+    // --- New: Get all enquiries for a project ---
+    @Test
+    void getProjectEnquiries_returnsAllForProject() {
+        enquiryController.submitEnquiry(applicant.getNric(), "ProjA", "Q1");
+        enquiryController.submitEnquiry(applicant.getNric(), "ProjB", "Q2");
+        List<Enquiry> e1 = enquiryController.getProjectEnquiries("ProjA");
+        assertEquals(1, e1.size());
+        assertEquals("Q1", e1.get(0).getContent());
+    }
+
 }

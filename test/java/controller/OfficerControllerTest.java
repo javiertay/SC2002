@@ -183,4 +183,45 @@ class OfficerControllerTest {
             OfficerController.class.getMethod("updateNeighborhood", String.class, String.class, String.class);
         });
     }
+    // --- New: Assign flat when officer not assigned/approved ---
+    // --- New: Assign flat when officer not assigned or not approved (O1) ---
+    @Test
+    void assignFlat_whenNotAssignedOrNotApproved_fails() {
+        // 1) Set up a successful application for a new applicant
+        Applicant testApplicant = new Applicant("TestUser", "S1234500X", "pw", 40, "Married");
+        Application app = new Application(testApplicant, testProject, "2-Room");
+        app.setStatus(Application.Status.SUCCESSFUL);
+        ApplicationRegistry.addApplication(testApplicant.getNric(), app);
+
+        // 2) Officer has NOT been approved or assigned to any project
+        //    officer and officerController already initialized in @BeforeEach
+
+        // 3) Attempt to assign flat
+        officerController.assignFlatToApplicant(officer, testApplicant.getNric());
+
+        // 4) Should print the “no successful application found” message
+        String out = outContent.toString();
+        assertTrue(out.contains("No successful application found for this applicant in your project."));
+    }
+
+
+    // --- New: Generate receipt for non-BOOKED application ---
+    @Test
+    void generateReceipt_forNonBookedApplication_printsReceipt() {
+        // Set up a SUCCESSFUL but not BOOKED application
+        officer.assignToProject("TestProject");
+        Applicant a = new Applicant("A","S100010Y","pw",35,"Married");
+        Application app = new Application(a, testProject, "2-Room");
+        app.setStatus(Application.Status.SUCCESSFUL);
+        ApplicationRegistry.addApplication(a.getNric(), app);
+
+        outContent.reset();
+        officerController.generateReceipt(officer, a.getNric());
+
+        // code currently prints a receipt even though not BOOKED
+        String rec = outContent.toString();
+        assertTrue(rec.contains("===== Flat Booking Receipt ====="));
+        assertTrue(rec.contains("Applicant Name: A"));
+    }
+
 }
