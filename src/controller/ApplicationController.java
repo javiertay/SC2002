@@ -5,6 +5,7 @@ import model.*;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -21,6 +22,10 @@ public class ApplicationController {
             .toList();
 
         if (applicant.getMaritalStatus().equalsIgnoreCase("single")) {
+            if (applicant.getAge() < 35) {
+                // Below 35 and single — no eligible projects
+                return Collections.emptyList();
+            }
             projects = projects.stream().filter(project -> {
                 FlatType twoRoom = project.getFlatTypes().get("2-Room");
                 return twoRoom != null && twoRoom.getRemainingUnits() > 0;

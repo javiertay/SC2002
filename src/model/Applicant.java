@@ -6,9 +6,9 @@ public class Applicant extends User {
     }
 
     public boolean canApply(String flatType) {
-        if (maritalStatus.equalsIgnoreCase("Single") && age >= 35) {
+        if (getMaritalStatus().equalsIgnoreCase("Single") && getAge() >= 35) {
             return flatType.equals("2-Room");
-        } else if (maritalStatus.equalsIgnoreCase("Married") && age >= 21) {
+        } else if (getMaritalStatus().equalsIgnoreCase("Married") && getAge() >= 21) {
             return true;
         }
         return false;
