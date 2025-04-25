@@ -24,10 +24,10 @@ This README file provides instructions on how to clone, compile, and run the pro
 
 - [Setup Instructions](#setup-instructions)
     - [Using the Terminal](#using-the-terminal)
-    - [Using an IDE (Eclipse/IntelliJ)](#using-an-ide-eclipseintellij)
+    - [Using an IDE (Eclipse/IntelliJ)](#using-an-ide)
 - [Generating JavaDocs](#generating-javadocs)
   - [Using the Terminal](#using-the-terminal-1)
-  - [Using an IDE](#using-an-ide)
+  - [Using an IDE](#using-an-ide-1)
 - [Usage](#usage)
   - [Login Credentials](#login-credentials)
 
@@ -50,12 +50,14 @@ This README file provides instructions on how to clone, compile, and run the pro
 │   ├── util/                           # utility helper files
 │   │   └── ...
 │   ├── view/                           # cli files
-│   │   └── ...
+│       └── ...
 ├── doc/
 │   ├── index.html                      # Javadoc site
 │   └── ...
 ├── report/
 │   ├── SC2002 Report.pdf               # Report document
+│   ├── UML Diagrams/                   # UML Class & Sequence Diagrams
+│       └── ...
 ├── test/java/controller                # unit test files
 │   └── ...
 ├── .gitignore
