@@ -136,4 +136,47 @@ class ApplicationControllerTest {
         assertTrue(rejected, "Manager should reject withdrawal");
         assertTrue(outContent.toString().contains("Withdrawal request rejected."));
     }
+    // --- New: Submit to non-existent project (A1) ---
+    @Test
+    void submitApplication_nonexistentProject_fails() {
+        boolean ok = appController.submitApplication(married30, "NoSuchProj", "2-Room");
+        assertFalse(ok);
+        assertTrue(outContent.toString().contains("Project not found."));
+    }
+
+    // --- New: Submit with invalid flat type (A2) ---
+    @Test
+    void submitApplication_invalidFlatType_fails() {
+        assertFalse(appController.submitApplication(married30, "ProjB", "5-Room"));
+        assertTrue(outContent.toString().contains("Flat type does not exist in this project."));
+    }
+
+    // --- New: Duplicate application (A3) ---
+    @Test
+    void submitApplication_duplicateApplication_fails() {
+        assertTrue(appController.submitApplication(married30, "ProjA", "2-Room"));
+        outContent.reset();
+        // second apply without withdraw/reject
+        boolean ok2 = appController.submitApplication(married30, "ProjA", "2-Room");
+        assertFalse(ok2);
+        assertTrue(outContent.toString().contains(
+                "You already have an active application. Withdraw or wait for rejection to reapply."));
+    }
+
+    // --- New: Apply when visibility is off (A4) ---
+    @Test
+    void submitApplication_visibilityOff_fails() {
+        ProjectRegistry.getProjectByName("ProjA").setVisibility(false);
+        assertFalse(appController.submitApplication(married30, "ProjA", "2-Room"));
+        assertTrue(outContent.toString().contains("This project is no longer visible to applicants."));
+    }
+
+    // --- New: Ineligible applicant (under-age or wrong status) (A5) ---
+    @Test
+    void submitApplication_ineligibleApplicant_fails() {
+        // single, age 30 < 35, flatType "2-Room"
+        Applicant youngSingle = new Applicant("Yng","S100010X","pw",30,"Single");
+        assertFalse(appController.submitApplication(youngSingle, "ProjA", "2-Room"));
+        assertTrue(outContent.toString().contains("You are not eligible to apply for this flat type."));
+    }
 }
