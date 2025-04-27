@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                             http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.example</groupId>
+    <artifactId>SC2002-master</artifactId>
+    <version>1.0-SNAPSHOT</version>
+
+    <properties>
+        <!-- Encoding -->
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <!-- Centralized Java version -->
+        <java.version>23</java.version>
+
+        <!-- Compiler settings -->
+        <!-- ‘release’ is preferred for Java 9+ to ensure correct APIs -->
+        <maven.compiler.release>${java.version}</maven.compiler.release>
+        <!-- fallback in case some plugin still reads these -->
+        <maven.compiler.source>${java.version}</maven.compiler.source>
+        <maven.compiler.target>${java.version}</maven.compiler.target>
+    </properties>
+
+    <dependencies>
+        <!-- JUnit 5 for testing -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>5.8.1</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Batik libs from your lib folder -->
+        <dependency>
+            <groupId>batik</groupId>
+            <artifactId>batik-anim</artifactId>
+            <version>1.14</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/lib/batik-anim-1.14.jar</systemPath>
+        </dependency>
+        <dependency>
+            <groupId>batik</groupId>
+            <artifactId>batik-awt-util</artifactId>
+            <version>1.14</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/lib/batik-awt-util-1.14.jar</systemPath>
+        </dependency>
+        <!-- …add any other JARs under lib/ here in the same style… -->
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- Use Maven Compiler Plugin to target Java 24 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.10.1</version>
+                <configuration>
+                    <!-- this picks up ${java.version} as the release level -->
+                    <release>${java.version}</release>
+                </configuration>
+            </plugin>
+
+            <!-- Surefire plugin to run JUnit 5 tests -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.0.0-M7</version>
+                <configuration>
+                    <includeDependencies>true</includeDependencies>
+                    <useModulePath>false</useModulePath>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
